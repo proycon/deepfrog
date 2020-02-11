@@ -26,7 +26,6 @@ class POSData:
         self.maxlength = 0 #maximum number of subtokens per sentence (computed later)
         self.sentences = []
         self.tokeniser = tokeniser
-        super().__init__()
 
     def load_mbt_file(self,filename):
         """Load an MBT-style training file, returns tagged sentences"""
