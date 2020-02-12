@@ -49,7 +49,7 @@ from transformers import (
     XLMRobertaTokenizer,
     get_linear_schedule_with_warmup,
 )
-from data import TaggerInputDataset #convert_examples_to_features, get_labels, read_examples_from_file
+from deepfrog.data import TaggerInputDataset #convert_examples_to_features, get_labels, read_examples_from_file
 
 
 try:
@@ -84,6 +84,8 @@ class Tagger:
         self.pad_token_label_id = CrossEntropyLoss().ignore_index
         self.logger = logger
 
+        self.logger.info("Initialising Tagger")
+
         self.set_seed()
 
         # Load pretrained model and tokenizer
@@ -114,6 +116,8 @@ class Tagger:
 
         self.model.to(self.args.device)
 
+        self.logger.info("Tagger initialisation complete")
+
     def set_seed(self):
         random.seed(self.args.seed)
         np.random.seed(self.args.seed)
@@ -134,6 +138,8 @@ class Tagger:
 
     def train(self, train_file):
         """ Train the model """
+        self.logger.info("Training on file %s", train_file)
+
         train_dataset = self.load_and_cache_examples(train_file, mode="train")
 
         if self.args.local_rank in [-1, 0]:
@@ -189,18 +195,18 @@ class Tagger:
             )
 
         # Train!
-        logger.info("***** Running training *****")
-        logger.info("  Num examples = %d", len(train_dataset))
-        logger.info("  Num Epochs = %d", self.args.num_train_epochs)
-        logger.info("  Instantaneous batch size per GPU = %d", self.args.per_gpu_train_batch_size)
-        logger.info(
+        self.logger.info("***** Running training *****")
+        self.logger.info("  Num examples = %d", len(train_dataset))
+        self.logger.info("  Num Epochs = %d", self.args.num_train_epochs)
+        self.logger.info("  Instantaneous batch size per GPU = %d", self.args.per_gpu_train_batch_size)
+        self.logger.info(
             "  Total train batch size (w. parallel, distributed & accumulation) = %d",
             self.args.train_batch_size
             * self.args.gradient_accumulation_steps
             * (torch.distributed.get_world_size() if self.args.local_rank != -1 else 1),
         )
-        logger.info("  Gradient Accumulation steps = %d", self.args.gradient_accumulation_steps)
-        logger.info("  Total optimization steps = %d", t_total)
+        self.logger.info("  Gradient Accumulation steps = %d", self.args.gradient_accumulation_steps)
+        self.logger.info("  Total optimization steps = %d", t_total)
 
         global_step = 0
         epochs_trained = 0
@@ -212,10 +218,10 @@ class Tagger:
             epochs_trained = global_step // (len(train_dataloader) // self.args.gradient_accumulation_steps)
             steps_trained_in_current_epoch = global_step % (len(train_dataloader) // self.args.gradient_accumulation_steps)
 
-            logger.info("  Continuing training from checkpoint, will skip to saved global_step")
-            logger.info("  Continuing training from epoch %d", epochs_trained)
-            logger.info("  Continuing training from global step %d", global_step)
-            logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
+            self.logger.info("  Continuing training from checkpoint, will skip to saved global_step")
+            self.logger.info("  Continuing training from epoch %d", epochs_trained)
+            self.logger.info("  Continuing training from global step %d", global_step)
+            self.logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
 
         tr_loss, logging_loss = 0.0, 0.0
         self.model.zero_grad()
@@ -409,7 +415,7 @@ class Tagger:
                 with open(cached_labels_file, 'r', encoding='utf-8') as f:
                     self.labels = json.load(f)
         else:
-            logger.info("Creating features from dataset file at %s", self.args.data_dir)
+            logger.info("Creating features from dataset file at %s", datafile)
             examples = TaggerInputDataset(logger)
             examples.load_mbt_file(datafile)
             examples.convert_to_features(
@@ -449,7 +455,8 @@ class Tagger:
         return dataset
 
     def __call__(self, train_file=None,dev_file=None,test_file=None):
-        self.logger.info("Training/evaluation parameters %s", self.args)
+        self.logger.info("Calling tagger for train_file=%s, dev_file=%s, test_file=%s", train_file,dev_file,test_file)
+        self.logger.info(" with tagger parameters: %s", self.args)
 
         # Training
         if train_file:
@@ -547,7 +554,7 @@ def main():
         default=None,
         type=str,
         required=False,
-        help="The file containing the development data (two tab separated columns (word, token), one token per line, sentences delimited by an empty line or <utt>)",
+        help="The file containing the development data (two tab separated columns (word, token), one token per line, sentences delimited by an empty line or <utt>). Evaluation will be performed on this file.",
     )
     parser.add_argument(
         "--test",
@@ -681,7 +688,7 @@ def main():
         and not args.overwrite_model_dir
     ):
         raise ValueError(
-            "Output directory ({}) already exists and is not empty. Use --overwrite_model_dir to overcome.".format(
+            "Model output directory ({}) already exists and is not empty. Use --overwrite_model_dir to overcome.".format(
                 args.model_dir
             )
         )
@@ -714,7 +721,7 @@ def main():
 
 
     tagger = Tagger(args, logger)
-    tagger()
+    tagger(args.train, args.dev, args.test)
 
 if __name__ == "__main__":
     main()

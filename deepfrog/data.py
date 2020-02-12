@@ -83,7 +83,7 @@ class TaggerInputDataset:
 
         for (ex_index, example) in enumerate(self.instances):
             if ex_index % 10000 == 0:
-                self.logger.info("Writing example %d of %d", ex_index, len(self.instances))
+                self.logger.info("Conversion to features, example %d of %d", ex_index, len(self.instances))
 
             tokens = []
             label_ids = []
