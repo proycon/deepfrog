@@ -385,20 +385,19 @@ class Tagger:
 
 
     def load_and_cache_examples(self, datafile, mode):
-        if self.args.local_rank not in [-1, 0]:# and not evaluate:
+        if self.args.local_rank not in [-1, 0] and mode == 'train':# and not evaluate:
             torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
 
         # Load data features from cache or dataset file
         cached_features_file = os.path.join(
-            self.args.work_dir,
+            self.args.model_dir,
             "features_{}_{}_{}".format(
                 mode, list(filter(None, self.args.model.split("/"))).pop(), str(self.args.max_seq_length)
             ),
         )
         cached_labels_file = os.path.join(
-            self.args.work_dir,
-            "labels_{}_{}.json".format(
-                mode, list(filter(None, self.args.model.split("/"))).pop()
+            self.args.model_dir,
+            "labels_{}.json".format( list(filter(None, self.args.model.split("/"))).pop()
             ),
         )
 
@@ -406,8 +405,9 @@ class Tagger:
             logger.info("Loading features from cached file %s", cached_features_file)
             features = torch.load(cached_features_file)
             logger.info("Loading labels from cached file %s", cached_features_file)
-            with open(cached_labels_file, 'r', encoding='utf-8') as f:
-                self.labels = json.load(f)
+            if mode == 'train':
+                with open(cached_labels_file, 'r', encoding='utf-8') as f:
+                    self.labels = json.load(f)
         else:
             logger.info("Creating features from dataset file at %s", self.args.data_dir)
             examples = TaggerInputDataset(logger)
@@ -436,7 +436,7 @@ class Tagger:
                 with open(cached_labels_file, 'w', encoding='utf-8') as f:
                     json.dump(self.labels, f, ensure_ascii=False)
 
-        if self.args.local_rank == 0: # and not evaluate:
+        if self.args.local_rank == 0 and mode == 'train': # and not evaluate:
             torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
 
         # Convert to Tensors and build dataset
@@ -557,13 +557,13 @@ def main():
         help="The file containing the development data (two tab separated columns (word, token), one token per line, sentences delimited by an empty line or <utt>)",
     )
 
-    parser.add_argument(
-        "--work_dir",
-        default=".",
-        type=str,
-        required=False,
-        help="The directory used for caching fine-tuned models",
-    )
+    #parser.add_argument(
+    #    "--work_dir",
+    #    default=".",
+    #    type=str,
+    #    required=False,
+    #    help="The directory used for caching fine-tuned models",
+    #)
     parser.add_argument(
         "--model_type",
         default=None,
@@ -586,13 +586,7 @@ def main():
         help="The directory where the fine-tuned model will be stored (and checkpoints) will be written and read from.",
     )
 
-    # Other parameters
-    parser.add_argument(
-        "--labels",
-        default="",
-        type=str,
-        help="Path to a file containing all labels. If not specified, CoNLL-2003 labels are used.",
-    )
+    #Other parameters
     parser.add_argument(
         "--config_name", default="", type=str, help="Pretrained config name or path if not the same as model_name"
     )
