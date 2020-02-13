@@ -17,7 +17,7 @@ import sys
 
 
 class TaggerInputDataset:
-    def __init__(self, logger, maxtokens=50):
+    def __init__(self, logger, maxtokens=50, labelsonly=False):
         self.tags = set() #list of all tags
         self.index2tag = []
         self.tag2index = {}
@@ -26,6 +26,7 @@ class TaggerInputDataset:
         self.instances = [] #corresponds to sentences
         self.features = [] #instances after conversion to features
         self.labelset = set()
+        self.labelsonly = labelsonly
         self.logger = logger
 
     def load_mbt_file(self,filename):
@@ -38,17 +39,19 @@ class TaggerInputDataset:
                 if not fields or fields[0] == "<utt>":
                     #end of sentence marker-found
                     if len(words) <= self.maxtokens:
-                        self.instances.append(TaggerInputInstance(len(self.instances), words, labels))
+                        if not self.labelsonly:
+                            self.instances.append(TaggerInputInstance(len(self.instances), words, labels))
                     else:
                         print("Skipping sentence " + str(i+1) + " because it exceeds the maximum token limit",file=sys.stderr)
                     words = []
                     labels = []
                 else:
                     word, label = fields
-                    words.append(word)
-                    labels.append(label)
+                    if not self.labelsonly:
+                        words.append(word)
+                        labels.append(label)
                     self.labelset.add(label)
-        if words and len(words) <= self.maxtokens: #in case the final <utt> is omitted
+        if not self.labelsonly and words and len(words) <= self.maxtokens: #in case the final <utt> is omitted
             self.instances.append(TaggerInputInstance(len(self.instances), words, labels))
 
     def labels(self):

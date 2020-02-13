@@ -19,7 +19,7 @@ import glob
 import logging
 import os
 import random
-import json
+import shutil
 
 import numpy as np
 import torch
@@ -76,14 +76,24 @@ MODEL_CLASSES = {
     "xlmroberta": (XLMRobertaConfig, XLMRobertaForTokenClassification, XLMRobertaTokenizer),
 }
 
+class AttrDict(dict):
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
 
 class Tagger:
-    def __init__(self, args, logger):
-        self.args = args
+    def __init__(self, **kwargs):
+        self.args = AttrDict()
+        self.args.update(kwargs)
+        for required in ('model_dir','pretrained_model'):
+            assert required in kwargs
         self.labels = []
         self.pad_token_label_id = CrossEntropyLoss().ignore_index
-        self.logger = logger
 
+        self.logger = self.args.logger
         self.logger.info("Initialising Tagger")
 
         self.set_seed()
@@ -92,21 +102,27 @@ class Tagger:
         if self.args.local_rank not in [-1, 0]:
             torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
 
+        #make model dir if it does not exist
+        if not os.path.exists(self.args.model_dir) and self.args.local_rank in [-1, 0]:
+            os.makedirs(self.args.model_dir)
+
+        self.load_labels()
+
         self.args.model_type = self.args.model_type.lower()
         self.config_class, self.model_class, self.tokenizer_class = MODEL_CLASSES[self.args.model_type]
         self.config = self.config_class.from_pretrained(
-            self.args.config_name if self.args.config_name else self.args.model,
-            #num_labels=num_labels,
+            self.args.config_name if self.args.config_name else self.args.pretrained_model,
+            num_labels=self.num_labels,
             cache_dir=self.args.cache_dir if self.args.cache_dir else None,
         )
         self.tokenizer = self.tokenizer_class.from_pretrained(
-            self.args.tokenizer_name if self.args.tokenizer_name else self.args.model,
+            self.args.tokenizer_name if self.args.tokenizer_name else self.args.pretrained_model,
             do_lower_case=self.args.do_lower_case,
             cache_dir=self.args.cache_dir if self.args.cache_dir else None,
         )
         self.model = self.model_class.from_pretrained(
-            self.args.model,
-            from_tf=bool(".ckpt" in self.args.model),
+            self.args.pretrained_model,
+            from_tf=bool(".ckpt" in self.args.pretrained_model),
             config=self.config,
             cache_dir=self.args.cache_dir if self.args.cache_dir else None,
         )
@@ -170,12 +186,12 @@ class Tagger:
         )
 
         # Check if saved optimizer or scheduler states exist
-        if os.path.isfile(os.path.join(self.args.model, "optimizer.pt")) and os.path.isfile(
-            os.path.join(self.args.model, "scheduler.pt")
+        if os.path.isfile(os.path.join(self.args.pretrained_model, "optimizer.pt")) and os.path.isfile(
+            os.path.join(self.args.pretrained_model, "scheduler.pt")
         ):
             # Load in optimizer and scheduler states
-            optimizer.load_state_dict(torch.load(os.path.join(self.args.model, "optimizer.pt")))
-            scheduler.load_state_dict(torch.load(os.path.join(self.args.model, "scheduler.pt")))
+            optimizer.load_state_dict(torch.load(os.path.join(self.args.pretrained_model, "optimizer.pt")))
+            scheduler.load_state_dict(torch.load(os.path.join(self.args.pretrained_model, "scheduler.pt")))
 
         if self.args.fp16:
             try:
@@ -212,9 +228,9 @@ class Tagger:
         epochs_trained = 0
         steps_trained_in_current_epoch = 0
         # Check if continuing training from a checkpoint
-        if os.path.exists(self.args.model):
+        if os.path.exists(self.args.pretrained_model):
             # set global_step to gobal_step of last saved checkpoint from model path
-            global_step = int(self.args.model.split("-")[-1].split("/")[0])
+            global_step = int(self.args.pretrained_model.split("-")[-1].split("/")[0])
             epochs_trained = global_step // (len(train_dataloader) // self.args.gradient_accumulation_steps)
             steps_trained_in_current_epoch = global_step % (len(train_dataloader) // self.args.gradient_accumulation_steps)
 
@@ -245,7 +261,9 @@ class Tagger:
                     inputs["token_type_ids"] = (
                         batch[2] if self.args.model_type in ["bert", "xlnet"] else None
                     )  # XLM and RoBERTa don"t use segment_ids
+                #logger.info("DEBUG: %s", [(k,v.size()) for k,v in inputs.items()])
 
+                #logger.info("DEBUG labels: %s", inputs['labels'])
                 outputs = self.model(**inputs)
                 loss = outputs[0]  # model outputs are always tuple in pytorch-transformers (see doc)
 
@@ -390,6 +408,48 @@ class Tagger:
         return results, preds_list
 
 
+    def load_labels(self):
+        labels_file = self.labels_file()
+        if self.args.labels_file:
+            if not os.path.exists(labels_file):
+                #copy the explicitly specified label file
+                logger.info("Copying labels file %s", self.args.labels_file)
+                shutil.copyfile(self.args.label_file, labels_file)
+        if os.path.exists(labels_file):
+            self.labels = []
+            with open(labels_file, 'r', encoding='utf-8') as f:
+                for line in f.read():
+                    label = line.strip()
+                    if label:
+                        self.labels.append(line)
+            self.num_labels = len(self.labels)
+        else:
+            logger.info("Extracting labels from training data %s", self.args.train_file)
+            examples = TaggerInputDataset(logger,labelsonly=True)
+            try:
+                examples.load_mbt_file(self.args.train_file)
+            except (AttributeError, KeyError):
+                raise Exception("Model has not been trained yet, no labels found in model directory {}".format(self.args.model_dir))
+            self.labels = examples.labels()
+            self.num_labels = examples.num_labels()
+            self.save_labels()
+
+        self.logger.info("Loaded %d labels", self.num_labels)
+
+    def labels_file(self):
+        return os.path.join(
+            self.args.model_dir,
+            "{}.labels".format( list(filter(None, self.args.pretrained_model.split("/"))).pop()
+            ),
+        )
+
+    def save_labels(self):
+        labels_file = self.labels_file()
+        logger.info("Saving %d labels to %s", self.num_labels, labels_file)
+        with open(labels_file, 'w', encoding='utf-8') as f:
+            for label in self.labels:
+                f.write(label + "\n")
+
     def load_and_cache_examples(self, datafile, mode):
         if self.args.local_rank not in [-1, 0] and mode == 'train':# and not evaluate:
             torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
@@ -397,13 +457,8 @@ class Tagger:
         # Load data features from cache or dataset file
         cached_features_file = os.path.join(
             self.args.model_dir,
-            "features_{}_{}_{}".format(
-                mode, list(filter(None, self.args.model.split("/"))).pop(), str(self.args.max_seq_length)
-            ),
-        )
-        cached_labels_file = os.path.join(
-            self.args.model_dir,
-            "labels_{}.json".format( list(filter(None, self.args.model.split("/"))).pop()
+            "{}_{}_{}.features.bin".format(
+                mode, list(filter(None, self.args.pretrained_model.split("/"))).pop(), str(self.args.max_seq_length)
             ),
         )
 
@@ -411,9 +466,6 @@ class Tagger:
             logger.info("Loading features from cached file %s", cached_features_file)
             features = torch.load(cached_features_file)
             logger.info("Loading labels from cached file %s", cached_features_file)
-            if mode == 'train':
-                with open(cached_labels_file, 'r', encoding='utf-8') as f:
-                    self.labels = json.load(f)
         else:
             logger.info("Creating features from dataset file at %s", datafile)
             examples = TaggerInputDataset(logger)
@@ -437,10 +489,8 @@ class Tagger:
             if self.args.local_rank in [-1, 0]:
                 logger.info("saving features into cached file %s", cached_features_file)
                 torch.save(examples.features, cached_features_file)
-                logger.info("saving labels into cached file %s", cached_labels_file)
-                self.labels = examples.labels()
-                with open(cached_labels_file, 'w', encoding='utf-8') as f:
-                    json.dump(self.labels, f, ensure_ascii=False)
+            features = examples.features
+            self.config.num_labels = examples.num_labels()
 
         if self.args.local_rank == 0 and mode == 'train': # and not evaluate:
             torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
@@ -460,6 +510,8 @@ class Tagger:
 
         # Training
         if train_file:
+
+            #train
             self.train(train_file)
 
             # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
@@ -543,21 +595,21 @@ def main():
 
     # Required parameters
     parser.add_argument(
-        "--train",
+        "--train_file",
         default=None,
         type=str,
-        required=True,
+        required=False,
         help="The file containing the trainings data (two tab separated columns (word, token), one token per line, sentences delimited by an empty line or <utt>)",
     )
     parser.add_argument(
-        "--dev",
+        "--dev_file",
         default=None,
         type=str,
         required=False,
         help="The file containing the development data (two tab separated columns (word, token), one token per line, sentences delimited by an empty line or <utt>). Evaluation will be performed on this file.",
     )
     parser.add_argument(
-        "--test",
+        "--test_file",
         default=None,
         type=str,
         required=False,
@@ -579,7 +631,8 @@ def main():
         help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()),
     )
     parser.add_argument(
-        "--model",
+        "--pretrained_model",
+        "-m",
         default=None,
         type=str,
         required=True,
@@ -587,21 +640,30 @@ def main():
     )
     parser.add_argument(
         "--model_dir",
+        "-d",
         default=None,
         type=str,
         required=True,
         help="The directory where the fine-tuned model will be stored (and checkpoints) will be written and read from.",
     )
+    parser.add_argument(
+        "--labels_file",
+        "-l",
+        default=None,
+        type=str,
+        required=False,
+        help="Path to a file holding all labels (plain text, utf-8, one label per line), will be automatically derived from training data if not specified."
+    )
 
     #Other parameters
     parser.add_argument(
-        "--config_name", default="", type=str, help="Pretrained config name or path if not the same as model_name"
+        "--config_name", default="", type=str, help="Pretrained config name or path if not the same as pretrained_model"
     )
     parser.add_argument(
         "--tokenizer_name",
         default="",
         type=str,
-        help="Pretrained tokenizer name or path if not the same as model_name",
+        help="Pretrained tokenizer name or path if not the same as pretrained_model",
     )
     parser.add_argument(
         "--cache_dir",
@@ -684,7 +746,7 @@ def main():
     if (
         os.path.exists(args.model_dir)
         and os.listdir(args.model_dir)
-        and args.train
+        and args.train_file
         and not args.overwrite_model_dir
     ):
         raise ValueError(
@@ -719,9 +781,12 @@ def main():
         args.fp16,
     )
 
+    kwargs = args.__dict__
+    kwargs['logger'] = logger
 
-    tagger = Tagger(args, logger)
-    tagger(args.train, args.dev, args.test)
+    tagger = Tagger(**kwargs)
+    tagger(args.train_file, args.dev_file, args.test_file)
+
 
 if __name__ == "__main__":
     main()
