@@ -327,12 +327,8 @@ class Tagger:
                         model_to_save.save_pretrained(model_dir)
                         self.tokenizer.save_pretrained(model_dir)
 
-                        logger.info("Saving parameters to %s", model_dir)
-                        logger.info("DEBUG: %s", self.args)
-                        try:
-                            torch.save(self.args, os.path.join(model_dir, "training_self.args.bin"))
-                        except TypeError as e:
-                            logger.error("PARAMETER SERIALISATION ERROR: %s",e)
+                        logger.info("Saving parameters to %s: %s")
+                        torch.save({ k:v for k,v in self.args.items() if v is None or isinstance(v, (str,float,int,bool))} , os.path.join(model_dir, "training_self.args.bin"))
 
                         logger.info("Saving model checkpoint to %s", model_dir)
 
@@ -550,7 +546,7 @@ class Tagger:
                 self.tokenizer.save_pretrained(self.args.model_dir)
 
                 # Good practice: save your training arguments together with the trained model
-                torch.save(self.args, os.path.join(self.args.model_dir, "training_self.args.bin"))
+                torch.save({ k:v for k,v in self.args.items() if v is None or isinstance(v, (str,float,int,bool))} , os.path.join(self.args.model_dir, "training_self.args.bin"))
 
         # Evaluation on dev set
         dev_evaluation = {}
