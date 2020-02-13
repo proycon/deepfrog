@@ -327,8 +327,9 @@ class Tagger:
                         model_to_save.save_pretrained(model_dir)
                         self.tokenizer.save_pretrained(model_dir)
 
-                        logger.info("Saving parameters to %s: %s")
-                        torch.save({ k:v for k,v in self.args.items() if v is None or isinstance(v, (str,float,int,bool))} , os.path.join(model_dir, "training_self.args.bin"))
+                        param_file = os.path.join(model_dir, "training_self.args.bin")
+                        logger.info("Saving parameters to %s", param_file)
+                        torch.save({ k:v for k,v in self.args.items() if v is None or isinstance(v, (str,float,int,bool))} , param_file)
 
                         logger.info("Saving model checkpoint to %s", model_dir)
 
