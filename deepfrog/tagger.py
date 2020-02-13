@@ -327,7 +327,13 @@ class Tagger:
                         model_to_save.save_pretrained(model_dir)
                         self.tokenizer.save_pretrained(model_dir)
 
-                        torch.save(self.args, os.path.join(model_dir, "training_self.args.bin"))
+                        logger.info("Saving parameters to %s", model_dir)
+                        logger.info("DEBUG: %s", self.args)
+                        try:
+                            torch.save(self.args, os.path.join(model_dir, "training_self.args.bin"))
+                        except TypeError as e:
+                            logger.error("PARAMETER SERIALISATION ERROR: %s",e)
+
                         logger.info("Saving model checkpoint to %s", model_dir)
 
                         torch.save(optimizer.state_dict(), os.path.join(model_dir, "optimizer.pt"))
