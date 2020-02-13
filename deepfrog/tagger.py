@@ -276,9 +276,10 @@ class Tagger:
                     inputs["token_type_ids"] = (
                         batch[2] if self.args.model_type in ["bert", "xlnet"] else None
                     )  # XLM and RoBERTa don"t use segment_ids
-                #logger.info("DEBUG: %s", [(k,v.size()) for k,v in inputs.items()])
 
-                #logger.info("DEBUG labels: %s", inputs['labels'])
+                if self.args.debug:
+                    logger.info("DEBUG train input instance, tensor dimensions: %s", [(k,v.size()) for k,v in inputs.items()])
+                    logger.info("DEBUG train input instance: %s", inputs)
                 outputs = self.model(**inputs)
                 loss = outputs[0]  # model outputs are always tuple in pytorch-transformers (see doc)
 
@@ -369,6 +370,7 @@ class Tagger:
         self.logger.info("***** Running evaluation %s *****", prefix)
         self.logger.info("  Num examples = %d", len(eval_dataset))
         self.logger.info("  Batch size = %d", self.args.eval_batch_size)
+        self.logger.info("  Label set size = %d", self.num_labels)
         eval_loss = 0.0
         nb_eval_steps = 0
         preds = None
@@ -383,8 +385,13 @@ class Tagger:
                     inputs["token_type_ids"] = (
                         batch[2] if self.args.model_type in ["bert", "xlnet"] else None
                     )  # XLM and RoBERTa don"t use segment_ids
+                if self.args.debug:
+                    logger.info("DEBUG eval input instance, tensor dimensions: %s", [(k,v.size()) for k,v in inputs.items()])
+                    logger.info("DEBUG eval input instance: %s", inputs)
                 outputs = self.model(**inputs)
                 tmp_eval_loss, logits = outputs[:2]
+                if self.args.debug:
+                    logger.info("DEBUG eval output logits: %s", logits)
 
                 if self.args.n_gpu > 1:
                     tmp_eval_loss = tmp_eval_loss.mean()  # mean() to average on multi-gpu parallel evaluating
@@ -509,7 +516,6 @@ class Tagger:
                 logger.info("saving features into cached file %s", cached_features_file)
                 torch.save(examples.features, cached_features_file)
             features = examples.features
-            self.config.num_labels = examples.num_labels()
 
         if self.args.local_rank == 0 and mode == 'train': # and not evaluate:
             torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
@@ -761,6 +767,7 @@ def main():
         "See details at https://nvidia.github.io/apex/amp.html",
     )
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
+    parser.add_argument("--debug","-D", help="Enables debug mode for extra verbose output", action="store_true")
     args = parser.parse_args()
 
     if (
