@@ -89,22 +89,21 @@ class AttrDict(dict):
         if key in self:
             return self[key]
         else:
-            return super(AttrDict, self).__getattr__(key)
+            super(AttrDict, self).__getattr__(key)
 
     def __setattr__(self, key, value):
         if key[0] != '_':
             self[key] = value
         else:
-            return super(AttrDict, self).__setattr__(key, value)
+            super(AttrDict, self).__setattr__(key, value)
 
 
 class Tagger:
-    def __init__(self, args):
-        #self.args = AttrDict()
-        #self.args.update(kwargs)
-        #for required in ('model_dir','pretrained_model'):
-        #    assert required in kwargs
-        self.args = args
+    def __init__(self, **kwargs):
+        self.args = AttrDict()
+        self.args.update(kwargs)
+        for required in ('model_dir','pretrained_model'):
+            assert required in kwargs
         self.labels = []
         self.pad_token_label_id = CrossEntropyLoss().ignore_index
 
@@ -799,7 +798,7 @@ def main():
     kwargs = args.__dict__
     kwargs['logger'] = logger
 
-    tagger = Tagger(args)
+    tagger = Tagger(**kwargs)
     tagger(args.train_file, args.dev_file, args.test_file)
 
 
