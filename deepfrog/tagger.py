@@ -22,10 +22,11 @@
 # specific language governing permissions and limitations under the License.
 
 
+import sys
+import os
 import argparse
 import glob
 import logging
-import os
 import random
 import shutil
 
@@ -412,6 +413,7 @@ class Tagger:
                     preds_list[i].append(label_map[preds[i][j]])
 
         results = {
+            "instancecount": len(preds_list),
             "loss": eval_loss,
             "precision": precision_score(out_label_list, preds_list),
             "recall": recall_score(out_label_list, preds_list),
@@ -568,7 +570,8 @@ class Tagger:
                 if global_step:
                     result = {"{}_{}".format(global_step, k): v for k, v in result.items()}
                 dev_evaluation.update(result)
-            output_eval_file = os.path.join(self.args.model_dir, "dev_evaluation.txt")
+            dev_filename = os.path.basename(dev_file)
+            output_eval_file = dev_filename + "_evaluation.log"
             with open(output_eval_file, "w") as writer:
                 for key in sorted(dev_evaluation.keys()):
                     writer.write("{} = {}\n".format(key, str(dev_evaluation[key])))
@@ -582,19 +585,19 @@ class Tagger:
             result, predictions = self.evaluate(test_file, mode="test")
 
             # Save evaluation results
-            output_test_results_file = os.path.join(self.args.model_dir, "test_evaluation.txt")
-            with open(output_test_results_file, "w") as writer:
+            test_filename = os.path.basename(test_file)
+            output_eval_file = test_filename + "_evaluation.log"
+            with open(output_eval_file, "w") as writer:
                 for key in sorted(result.keys()):
                     writer.write("{} = {}\n".format(key, str(result[key])))
             test_evaluation = result
 
             # Output predictions to standard output
-            output_test_predictions_file = os.path.join(self.args.model_dir, "test_output.txt")
             test_output = []
             with open(test_file, "r") as f:
                 example_id = 0
                 for line in f:
-                    if line.startswith("-DOCSTART-") or line == "" or line == "\n":
+                    if line.startswith("-DOCSTART-") or line == "" or line == "\n" or line == "<utt>":
                         writer.write(line)
                         if not predictions[example_id]:
                             example_id += 1
@@ -602,7 +605,7 @@ class Tagger:
                         test_output_item = (line.split("\t")[0], predictions[example_id].pop(0))
                         sys.stdout.write("{}\t{}\n".format(test_output_item[0], test_output_item[1]))
                     else:
-                        self.logger.warning("Maximum sequence length exceeded: No prediction for '%s'.", line.split()[0])
+                        self.logger.warning("No prediction for '%s' (maximum length exceeded?)", line.split()[0])
 
         return dev_evaluation, test_output, test_evaluation
 
