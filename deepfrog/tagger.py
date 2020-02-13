@@ -86,10 +86,16 @@ MODEL_CLASSES = {
 
 class AttrDict(dict):
     def __getattr__(self, key):
-        return self[key]
+        if key in self:
+            return self[key]
+        else:
+            super(AttrDict, self).__getattr__(key)
 
     def __setattr__(self, key, value):
-        self[key] = value
+        if key[0] != '_':
+            self[key] = value
+        else:
+            super(AttrDict, self).__setattr__(key, value)
 
 
 class Tagger:
