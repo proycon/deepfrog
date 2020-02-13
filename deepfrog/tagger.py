@@ -1,3 +1,11 @@
+#---------------------------------------------
+# DeepFrog
+#   by Maarten van Gompel
+#   Centre for Language and Speech Technology, Radboud University, Nijmegen
+#---------------------------------------------
+#Licensed under GNU General Public License v3
+#---------------------------------------------
+
 # Significant parts of this code are derived and adapted from run_ner.py and ner_utils.py in Huggingface's Transformers,
 # which was licensed as follows:
 #
