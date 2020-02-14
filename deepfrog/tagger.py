@@ -453,7 +453,7 @@ class Tagger:
                 for line in f:
                     label = line.strip()
                     if label:
-                        self.labels.append(line)
+                        self.labels.append(label)
             self.num_labels = len(self.labels)
         else:
             logger.info("Extracting labels from training data %s", self.args.train_file)
