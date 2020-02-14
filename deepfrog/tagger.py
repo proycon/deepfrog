@@ -404,6 +404,8 @@ class Tagger:
             else:
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
+            if self.args.debug:
+                logger.info("DEBUG eval output label ids: %s", out_label_ids)
 
         eval_loss = eval_loss / nb_eval_steps
         preds = np.argmax(preds, axis=2)
@@ -412,6 +414,10 @@ class Tagger:
 
         out_label_list = [[] for _ in range(out_label_ids.shape[0])]
         preds_list = [[] for _ in range(out_label_ids.shape[0])]
+
+        if self.args.debug:
+            logger.info("DEBUG eval label map: %s", label_map)
+            logger.info("DEBUG eval output label list: %s", out_label_list)
 
         for i in range(out_label_ids.shape[0]):
             for j in range(out_label_ids.shape[1]):
