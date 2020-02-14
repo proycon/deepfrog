@@ -598,6 +598,9 @@ class Tagger:
                     writer.write("{} = {}\n".format(key, str(result[key])))
             test_evaluation = result
 
+            if self.args.debug:
+                self.logger.info("DEBUG predictions: %s", predictions)
+
             # Output predictions to standard output
             test_output = []
             with open(test_file, "r") as f:
