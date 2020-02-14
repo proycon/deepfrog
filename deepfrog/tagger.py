@@ -450,7 +450,7 @@ class Tagger:
         if os.path.exists(labels_file):
             self.labels = []
             with open(labels_file, 'r', encoding='utf-8') as f:
-                for line in f.read():
+                for line in f:
                     label = line.strip()
                     if label:
                         self.labels.append(line)
