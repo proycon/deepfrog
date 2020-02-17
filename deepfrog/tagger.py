@@ -407,7 +407,7 @@ class Tagger:
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 ref_label_ids = np.append(ref_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
             if self.args.debug:
-                logger.info("DEBUG eval output label ids: %s", ref_label_ids)
+                logger.info("DEBUG eval reference label ids: %s", ref_label_ids)
 
         eval_loss = eval_loss / nb_eval_steps
         preds = np.argmax(preds, axis=2)
@@ -493,15 +493,14 @@ class Tagger:
         # Load data features from cache or dataset file
         cached_features_file = os.path.join(
             self.args.model_dir,
-            "{}_{}_{}.features.bin".format(
-                mode, list(filter(None, self.args.pretrained_model.split("/"))).pop(), str(self.args.max_seq_length)
+            "{}_{}_{}_{}.features.bin".format(
+                datafile, mode, list(filter(None, self.args.pretrained_model.split("/"))).pop(), str(self.args.max_seq_length)
             ),
         )
 
         if os.path.exists(cached_features_file) and not self.args.overwrite_cache:
             logger.info("Loading features from cached file %s", cached_features_file)
             features = torch.load(cached_features_file)
-            logger.info("Loading labels from cached file %s", cached_features_file)
         else:
             logger.info("Creating features from dataset file at %s", datafile)
             examples = TaggerInputDataset(logger)
@@ -609,7 +608,7 @@ class Tagger:
             test_evaluation = result
 
             if self.args.debug:
-                self.logger.info("DEBUG predictions: %s", predictions)
+                self.logger.info("DEBUG outputted predictions: %s", predictions)
 
             # Output predictions to standard output
             test_output = []
