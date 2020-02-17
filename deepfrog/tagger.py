@@ -613,7 +613,8 @@ class Tagger:
             with open(test_file, "r") as f:
                 example_id = 0
                 for line in f:
-                    if line.startswith("-DOCSTART-") or line == "" or line == "\n" or line == "<utt>":
+                    line = line.strip()
+                    if line.startswith("-DOCSTART-") or line == "" or line == "<utt>":
                         writer.write(line)
                         if not predictions[example_id]:
                             example_id += 1
@@ -621,7 +622,7 @@ class Tagger:
                         test_output_item = (line.split("\t")[0], predictions[example_id].pop(0))
                         sys.stdout.write("{}\t{}\n".format(test_output_item[0], test_output_item[1]))
                     else:
-                        self.logger.warning("No prediction for '%s' (maximum length exceeded?)", line.split()[0])
+                        self.logger.warning("No prediction for #%d '%s' (maximum length exceeded?)", example_id, line.split()[0])
 
         return dev_evaluation, test_output, test_evaluation
 
