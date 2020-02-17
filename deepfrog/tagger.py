@@ -611,7 +611,7 @@ class Tagger:
             # Output predictions to standard output
             test_output = []
             with open(test_file, "r") as f:
-                example_id = 0
+                example_id = 1
                 for line in f:
                     line = line.strip()
                     if line.startswith("-DOCSTART-") or line == "" or line == "<utt>":
