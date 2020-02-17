@@ -498,7 +498,7 @@ class Tagger:
             ),
         )
 
-        if os.path.exists(cached_features_file) and not self.args.overwrite_cache:
+        if os.path.exists(cached_features_file) and os.stat(cached_features_file).st_mtime > os.stat(datafile).st_mtime and not self.args.overwrite_cache:
             logger.info("Loading features from cached file %s", cached_features_file)
             features = torch.load(cached_features_file)
         else:
