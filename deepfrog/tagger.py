@@ -371,10 +371,12 @@ class Tagger:
         self.logger.info("  Num examples = %d", len(eval_dataset))
         self.logger.info("  Batch size = %d", self.args.eval_batch_size)
         self.logger.info("  Label set size = %d", self.num_labels)
+        if self.args.debug:
+            self.logger.info("  Sampler: ", type(eval_sampler))
         eval_loss = 0.0
         nb_eval_steps = 0
         preds = None
-        out_label_ids = None
+        ref_label_ids = None
         self.model.eval()
         for batch in tqdm(eval_dataloader, desc="Evaluating"):
             batch = tuple(t.to(self.args.device) for t in batch)
@@ -400,41 +402,42 @@ class Tagger:
             nb_eval_steps += 1
             if preds is None:
                 preds = logits.detach().cpu().numpy()
-                out_label_ids = inputs["labels"].detach().cpu().numpy()
+                ref_label_ids = inputs["labels"].detach().cpu().numpy()
             else:
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
-                out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
+                ref_label_ids = np.append(ref_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
             if self.args.debug:
-                logger.info("DEBUG eval output label ids: %s", out_label_ids)
+                logger.info("DEBUG eval output label ids: %s", ref_label_ids)
 
         eval_loss = eval_loss / nb_eval_steps
         preds = np.argmax(preds, axis=2)
 
         label_map = {i: label for i, label in enumerate(self.labels)}
 
-        out_label_list = [[] for _ in range(out_label_ids.shape[0])]
-        preds_list = [[] for _ in range(out_label_ids.shape[0])]
+        ref_label_list = [[] for _ in range(ref_label_ids.shape[0])]
+        preds_list = [[] for _ in range(ref_label_ids.shape[0])]
 
 
-        for i in range(out_label_ids.shape[0]):
-            for j in range(out_label_ids.shape[1]):
-                if out_label_ids[i, j] != self.pad_token_label_id:
-                    out_label_list[i].append(label_map[out_label_ids[i][j]])
+        for i in range(ref_label_ids.shape[0]):
+            for j in range(ref_label_ids.shape[1]):
+                if ref_label_ids[i, j] != self.pad_token_label_id:
+                    ref_label_list[i].append(label_map[ref_label_ids[i][j]])
                     preds_list[i].append(label_map[preds[i][j]])
 
         if self.args.debug:
             logger.info("DEBUG eval label map: %s", label_map)
-            logger.info("DEBUG eval output label list: %s", out_label_list)
+            logger.info("DEBUG eval reference label list: %s", ref_label_list)
+            logger.info("DEBUG eval output label list: %s", preds_list)
 
         results = {
             "instancecount": len(preds_list),
             "loss": eval_loss,
-            "precision": precision_score(out_label_list, preds_list),
-            "recall": recall_score(out_label_list, preds_list),
-            "f1": f1_score(out_label_list, preds_list),
+            "precision": precision_score(ref_label_list, preds_list),
+            "recall": recall_score(ref_label_list, preds_list),
+            "f1": f1_score(ref_label_list, preds_list),
         }
 
-        logger.info("***** Eval results %s *****", prefix)
+        logger.info("***** Evaluation results %s *****", prefix)
         for key in sorted(results.keys()):
             logger.info("  %s = %s", key, str(results[key]))
 
