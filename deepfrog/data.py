@@ -173,10 +173,20 @@ class TaggerInputDataset:
                 segment_ids += [pad_token_segment_id] * padding_length
                 label_ids += [pad_token_label_id] * padding_length
 
-            assert len(input_ids) == max_seq_length
-            assert len(input_mask) == max_seq_length
-            assert len(segment_ids) == max_seq_length
-            assert len(label_ids) == max_seq_length
+            try:
+                assert len(input_ids) == max_seq_length
+                assert len(input_mask) == max_seq_length
+                assert len(segment_ids) == max_seq_length
+                assert len(label_ids) == max_seq_length
+            except AssertionError:
+                self.logger.error("Failure featurising sample %d: %d=%d=%d=%d=%d", example.id, max_seq_length, len(input_ids),len(input_mask), len(segment_ids), len(label_ids))
+                self.logger.info("tokens: %s", " ".join([str(x) for x in tokens]))
+                self.logger.info("input_ids: %s", " ".join([str(x) for x in input_ids]))
+                self.logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
+                self.logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
+                self.logger.info("label_ids: %s", " ".join([str(x) for x in label_ids]))
+                self.logger.warning("skipping...")
+                continue
 
             if ex_index < 5:
                 self.logger.info("*** Example ***")
