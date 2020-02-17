@@ -14,10 +14,10 @@
 # specific language governing permissions and limitations under the License.
 
 import sys
-
+import logging
 
 class TaggerInputDataset:
-    def __init__(self, logger, maxtokens=50, labelsonly=False):
+    def __init__(self, logger=None, maxtokens=50, labelsonly=False):
         self.tags = set() #list of all tags
         self.index2tag = []
         self.tag2index = {}
@@ -27,7 +27,10 @@ class TaggerInputDataset:
         self.features = [] #instances after conversion to features
         self.labelset = set()
         self.labelsonly = labelsonly
-        self.logger = logger
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger(__name__)
 
     def load_file(self,filename):
         """Load a tab-separated training file, one token + label per line, returns tagged instances"""
@@ -53,6 +56,7 @@ class TaggerInputDataset:
                     self.labelset.add(label)
         if not self.labelsonly and words and len(words) <= self.maxtokens: #in case the final <utt> is omitted
             self.instances.append(TaggerInputInstance(len(self.instances), words, labels))
+
 
     def labels(self):
         """Returns all labels in the vocabulary, with the padding label on index 0"""
@@ -183,6 +187,19 @@ class TaggerInputDataset:
                 TaggerInputFeatures(input_ids=input_ids, input_mask=input_mask, segment_ids=segment_ids, label_ids=label_ids)
             )
 
+    def __iter__(self):
+        return iter(self.instances)
+
+    def __len__(self):
+        return len(self.instances)
+
+    def __getitem__(self,index):
+        return self.instances[index]
+
+    def write(self, fp):
+        for instance in self:
+            instance.write(fp)
+
 
 class TaggerInputInstance:
     """A single training/test example for token classification."""
@@ -209,6 +226,19 @@ class TaggerInputInstance:
 
     def __len__(self):
         return len(self.words)
+
+    def __iter__(self)
+        if self.labels:
+            for word, label in zip(self.words, self.labels):
+                yield word, label
+        else:
+            for word in self.words:
+                yield word, "?"
+
+    def write(self, fp):
+        for word, label in self:
+            fp.write(word + "\t" + label + "\n")
+        fp.write("\n")
 
 class TaggerInputFeatures:
     """A single set of features of data."""
