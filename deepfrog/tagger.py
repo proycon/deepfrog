@@ -415,15 +415,16 @@ class Tagger:
         out_label_list = [[] for _ in range(out_label_ids.shape[0])]
         preds_list = [[] for _ in range(out_label_ids.shape[0])]
 
-        if self.args.debug:
-            logger.info("DEBUG eval label map: %s", label_map)
-            logger.info("DEBUG eval output label list: %s", out_label_list)
 
         for i in range(out_label_ids.shape[0]):
             for j in range(out_label_ids.shape[1]):
                 if out_label_ids[i, j] != self.pad_token_label_id:
                     out_label_list[i].append(label_map[out_label_ids[i][j]])
                     preds_list[i].append(label_map[preds[i][j]])
+
+        if self.args.debug:
+            logger.info("DEBUG eval label map: %s", label_map)
+            logger.info("DEBUG eval output label list: %s", out_label_list)
 
         results = {
             "instancecount": len(preds_list),
