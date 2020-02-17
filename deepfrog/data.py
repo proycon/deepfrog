@@ -227,7 +227,7 @@ class TaggerInputInstance:
     def __len__(self):
         return len(self.words)
 
-    def __iter__(self)
+    def __iter__(self):
         if self.labels:
             for word, label in zip(self.words, self.labels):
                 yield word, label
