@@ -29,14 +29,14 @@ class TaggerInputDataset:
         self.labelsonly = labelsonly
         self.logger = logger
 
-    def load_mbt_file(self,filename):
-        """Load an MBT-style training file, returns tagged instances"""
+    def load_file(self,filename):
+        """Load a tab-separated training file, one token + label per line, returns tagged instances"""
         words = []
         labels = []
         with open(filename, 'r', encoding='utf-8') as f:
             for i, line in enumerate(f):
                 fields = line.strip().split("\t")
-                if not fields or fields[0] == "<utt>":
+                if not fields or fields[0] == "<utt>": #support old mbt-style too
                     #end of sentence marker-found
                     if len(words) <= self.maxtokens:
                         if not self.labelsonly:
