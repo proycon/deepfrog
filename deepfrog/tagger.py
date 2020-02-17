@@ -372,7 +372,7 @@ class Tagger:
         self.logger.info("  Batch size = %d", self.args.eval_batch_size)
         self.logger.info("  Label set size = %d", self.num_labels)
         if self.args.debug:
-            self.logger.info("  Sampler: ", type(eval_sampler))
+            self.logger.info("  Sampler: %s", type(eval_sampler))
         eval_loss = 0.0
         nb_eval_steps = 0
         preds = None
