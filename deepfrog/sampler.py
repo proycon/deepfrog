@@ -2,6 +2,7 @@
 
 import logging
 import random
+import argparse
 
 from deepfrog.data import TaggerInputDataset
 
@@ -9,8 +10,8 @@ ASSIGN_TRAIN = 0
 ASSIGN_DEV = 1
 ASSIGN_TEST = 2
 
-if __name__ == '__main__':
-    import argparse
+
+def main():
     parser = argparse.ArgumentParser(description="", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--test','-t', type=int,help="Size of test set", action='store',default=100,required=True)
     parser.add_argument('--dev','-d', type=int,help="Size of dev set", action='store',default=0,required=True)
@@ -32,13 +33,13 @@ if __name__ == '__main__':
     dev = set()
     test = set()
 
-    while len(dev) < len(args.dev):
+    while len(dev) < args.dev:
         index = random.randint(0, len(data))
         if assignments[index] == ASSIGN_TRAIN:
             assignments[index] = ASSIGN_DEV
             dev.add(index)
 
-    while len(test) < len(args.test):
+    while len(test) < args.test:
         index = random.randint(0, len(data))
         if assignments[index] == ASSIGN_TRAIN:
             assignments[index] = ASSIGN_TEST
@@ -58,6 +59,8 @@ if __name__ == '__main__':
 
 
 
+if __name__ == '__main__':
+    main()
 
 
 

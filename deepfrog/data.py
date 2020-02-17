@@ -38,8 +38,9 @@ class TaggerInputDataset:
         labels = []
         with open(filename, 'r', encoding='utf-8') as f:
             for i, line in enumerate(f):
-                fields = line.strip().split("\t")
-                if not fields or fields[0] == "<utt>": #support old mbt-style too
+                line = line.strip()
+                fields = line.split("\t")
+                if not line or line == "<utt>": #support old mbt-style too
                     #end of sentence marker-found
                     if len(words) <= self.maxtokens:
                         if not self.labelsonly:
@@ -49,7 +50,10 @@ class TaggerInputDataset:
                     words = []
                     labels = []
                 else:
-                    word, label = fields
+                    try:
+                        word, label = fields
+                    except ValueError:
+                        raise Exception("Unable to parse line " + str(i+1) + ": " + repr(fields))
                     if not self.labelsonly:
                         words.append(word)
                         labels.append(label)
