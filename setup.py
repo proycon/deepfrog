@@ -31,5 +31,9 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=[ 'transformers', 'torch', 'numpy', 'seqeval','tqdm','tensorboardX' ],
-    entry_points = {   'console_scripts': [ 'deepfrog-tagger = deepfrog.tagger:main' ] }
+    entry_points = {   'console_scripts': [
+        'deepfrog-tagger = deepfrog.tagger:main'
+        'deepfrog-sampler = deepfrog.sampler:main'
+     ]
+    }
 )
