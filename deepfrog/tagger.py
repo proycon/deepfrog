@@ -498,6 +498,7 @@ class Tagger:
             ),
         )
 
+
         if os.path.exists(cached_features_file) and os.stat(cached_features_file).st_mtime > os.stat(datafile).st_mtime and not self.args.overwrite_cache:
             logger.info("Loading features from cached file %s", cached_features_file)
             features = torch.load(cached_features_file)
@@ -508,6 +509,7 @@ class Tagger:
             examples.convert_to_features(
                 self.args.max_seq_length,
                 self.tokenizer,
+                self.labels,
                 cls_token_at_end=bool(self.args.model_type in ["xlnet"]),
                 # xlnet has a cls token at the end
                 cls_token=self.tokenizer.cls_token,
@@ -613,7 +615,7 @@ class Tagger:
             # Output predictions to standard output
             test_output = []
             with open(test_file, "r") as f:
-                example_id = 1
+                example_id = 0
                 for line in f:
                     line = line.strip()
                     if line.startswith("-DOCSTART-") or line == "" or line == "<utt>":

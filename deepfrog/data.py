@@ -64,6 +64,7 @@ class TaggerInputDataset:
     def convert_to_features(self,
                             max_seq_length,
                             tokenizer,
+                            labels=None,
                             cls_token_at_end=False,
                             cls_token="[CLS]",
                             cls_token_segment_id=1,
@@ -76,13 +77,16 @@ class TaggerInputDataset:
                             sequence_a_segment_id=0,
                             mask_padding_with_zero=True):
         """ Loads a data file into a list of `InputBatch`s
-            `cls_token_at_end` define the location of the CLS token:
+            `labels` is a list containing the vocabulary.
+            `cls_token_at_end` defines the location of the CLS token:
                 - False (Default, BERT/XLM pattern): [CLS] + A + [SEP] + B + [SEP]
                 - True (XLNet/GPT pattern): A + [SEP] + B + [SEP] + [CLS]
             `cls_token_segment_id` define the segment id associated to the CLS token (0 for BERT, 2 for XLNet)
         """
 
-        label_map = {label: i for i, label in enumerate(self.labels()) }
+        if labels is None:
+            labels = self.labels()
+        label_map = {label: i for i, label in enumerate(labels) }
 
         for (ex_index, example) in enumerate(self.instances):
             if ex_index % 10000 == 0:
