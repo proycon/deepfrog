@@ -615,7 +615,7 @@ class Tagger:
                 for line in f:
                     line = line.strip()
                     if line.startswith("-DOCSTART-") or line == "" or line == "<utt>":
-                        writer.write(line)
+                        sys.stdout.write(line + "\n")
                         if not predictions[example_id]:
                             example_id += 1
                     elif predictions[example_id]:
