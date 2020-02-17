@@ -460,9 +460,9 @@ class Tagger:
                         self.labels.append(label)
             self.num_labels = len(self.labels)
         else:
-            logger.info("Extracting labels from training data %s", self.args.train_file)
-            examples = TaggerInputDataset(logger,labelsonly=True)
             try:
+                logger.info("Extracting labels from training data %s", self.args.train_file)
+                examples = TaggerInputDataset(logger,labelsonly=True)
                 examples.load_mbt_file(self.args.train_file)
             except (AttributeError, KeyError):
                 raise Exception("Model has not been trained yet, no labels found in model directory {}".format(self.args.model_dir))
