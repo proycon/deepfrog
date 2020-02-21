@@ -128,18 +128,18 @@ class Tagger:
         self.config = self.config_class.from_pretrained(
             self.args.config_name if self.args.config_name else self.args.pretrained_model,
             num_labels=self.num_labels,
-            cache_dir=self.args.cache_dir if self.args.cache_dir else None,
+            cache_dir=self.args.model_cache_dir if self.args.model_cache_dir else None,
         )
         self.tokenizer = self.tokenizer_class.from_pretrained(
             self.args.tokenizer_name if self.args.tokenizer_name else self.args.pretrained_model,
             do_lower_case=self.args.do_lower_case,
-            cache_dir=self.args.cache_dir if self.args.cache_dir else None,
+            cache_dir=self.args.model_cache_dir if self.args.model_cache_dir else None,
         )
         self.model = self.model_class.from_pretrained(
             self.args.pretrained_model,
             from_tf=bool(".ckpt" in self.args.pretrained_model),
             config=self.config,
-            cache_dir=self.args.cache_dir if self.args.cache_dir else None,
+            cache_dir=self.args.model_cache_dir if self.args.model_cache_dir else None,
         )
 
         if self.args.local_rank == 0:
@@ -492,7 +492,7 @@ class Tagger:
 
         # Load data features from cache or dataset file
         cached_features_file = os.path.join(
-            self.args.model_dir,
+            self.args.input_cache_dir,
             "{}_{}_{}_{}.features.bin".format(
                 datafile, mode, list(filter(None, self.args.pretrained_model.split("/"))).pop(), str(self.args.max_seq_length)
             ),
@@ -707,10 +707,16 @@ def main():
         help="Pretrained tokenizer name or path if not the same as pretrained_model",
     )
     parser.add_argument(
-        "--cache_dir",
+        "--model_cache_dir",
         default="",
         type=str,
-        help="Where do you want to store the pre-trained transformer models downloaded from huggingface?",
+        help="Where do you want to store the pre-trained transformer models downloaded from huggingface? (defaults to huggingface library default)",
+    )
+    parser.add_argument(
+        "--input_cache_dir",
+        default=".",
+        type=str,
+        help="Where do you want to store cached data for the input data? (defaults to current working directory)",
     )
     parser.add_argument(
         "--max_seq_length",
