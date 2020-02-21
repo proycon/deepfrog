@@ -14,10 +14,10 @@
 # specific language governing permissions and limitations under the License.
 
 import sys
-
+import logging
 
 class TaggerInputDataset:
-    def __init__(self, logger, maxtokens=50, labelsonly=False):
+    def __init__(self, logger=None, maxtokens=50, labelsonly=False):
         self.tags = set() #list of all tags
         self.index2tag = []
         self.tag2index = {}
@@ -27,16 +27,20 @@ class TaggerInputDataset:
         self.features = [] #instances after conversion to features
         self.labelset = set()
         self.labelsonly = labelsonly
-        self.logger = logger
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger(__name__)
 
-    def load_mbt_file(self,filename):
-        """Load an MBT-style training file, returns tagged instances"""
+    def load_file(self,filename):
+        """Load a tab-separated training file, one token + label per line, returns tagged instances"""
         words = []
         labels = []
         with open(filename, 'r', encoding='utf-8') as f:
             for i, line in enumerate(f):
-                fields = line.strip().split("\t")
-                if not fields or fields[0] == "<utt>":
+                line = line.strip()
+                fields = line.split("\t")
+                if not line or line == "<utt>": #support old mbt-style too
                     #end of sentence marker-found
                     if len(words) <= self.maxtokens:
                         if not self.labelsonly:
@@ -46,13 +50,17 @@ class TaggerInputDataset:
                     words = []
                     labels = []
                 else:
-                    word, label = fields
+                    try:
+                        word, label = fields
+                    except ValueError:
+                        raise Exception("Unable to parse line " + str(i+1) + ": " + repr(fields))
                     if not self.labelsonly:
                         words.append(word)
                         labels.append(label)
                     self.labelset.add(label)
         if not self.labelsonly and words and len(words) <= self.maxtokens: #in case the final <utt> is omitted
             self.instances.append(TaggerInputInstance(len(self.instances), words, labels))
+
 
     def labels(self):
         """Returns all labels in the vocabulary, with the padding label on index 0"""
@@ -165,10 +173,20 @@ class TaggerInputDataset:
                 segment_ids += [pad_token_segment_id] * padding_length
                 label_ids += [pad_token_label_id] * padding_length
 
-            assert len(input_ids) == max_seq_length
-            assert len(input_mask) == max_seq_length
-            assert len(segment_ids) == max_seq_length
-            assert len(label_ids) == max_seq_length
+            try:
+                assert len(input_ids) == max_seq_length
+                assert len(input_mask) == max_seq_length
+                assert len(segment_ids) == max_seq_length
+                assert len(label_ids) == max_seq_length
+            except AssertionError:
+                self.logger.error("Failure featurising sample %d: %d=%d=%d=%d=%d", example.id, max_seq_length, len(input_ids),len(input_mask), len(segment_ids), len(label_ids))
+                self.logger.info("tokens: %s", " ".join([str(x) for x in tokens]))
+                self.logger.info("input_ids: %s", " ".join([str(x) for x in input_ids]))
+                self.logger.info("input_mask: %s", " ".join([str(x) for x in input_mask]))
+                self.logger.info("segment_ids: %s", " ".join([str(x) for x in segment_ids]))
+                self.logger.info("label_ids: %s", " ".join([str(x) for x in label_ids]))
+                self.logger.warning("skipping...")
+                continue
 
             if ex_index < 5:
                 self.logger.info("*** Example ***")
@@ -182,6 +200,19 @@ class TaggerInputDataset:
             self.features.append(
                 TaggerInputFeatures(input_ids=input_ids, input_mask=input_mask, segment_ids=segment_ids, label_ids=label_ids)
             )
+
+    def __iter__(self):
+        return iter(self.instances)
+
+    def __len__(self):
+        return len(self.instances)
+
+    def __getitem__(self,index):
+        return self.instances[index]
+
+    def write(self, fp):
+        for instance in self:
+            instance.write(fp)
 
 
 class TaggerInputInstance:
@@ -209,6 +240,19 @@ class TaggerInputInstance:
 
     def __len__(self):
         return len(self.words)
+
+    def __iter__(self):
+        if self.labels:
+            for word, label in zip(self.words, self.labels):
+                yield word, label
+        else:
+            for word in self.words:
+                yield word, "?"
+
+    def write(self, fp):
+        for word, label in self:
+            fp.write(word + "\t" + label + "\n")
+        fp.write("\n")
 
 class TaggerInputFeatures:
     """A single set of features of data."""

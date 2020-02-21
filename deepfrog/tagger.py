@@ -463,7 +463,7 @@ class Tagger:
             try:
                 logger.info("Extracting labels from training data %s", self.args.train_file)
                 examples = TaggerInputDataset(logger,labelsonly=True)
-                examples.load_mbt_file(self.args.train_file)
+                examples.load_file(self.args.train_file)
             except (AttributeError, KeyError):
                 raise Exception("Model has not been trained yet, no labels found in model directory {}".format(self.args.model_dir))
             self.labels = examples.labels()
@@ -505,7 +505,7 @@ class Tagger:
         else:
             logger.info("Creating features from dataset file at %s", datafile)
             examples = TaggerInputDataset(logger)
-            examples.load_mbt_file(datafile)
+            examples.load_file(datafile)
             examples.convert_to_features(
                 self.args.max_seq_length,
                 self.tokenizer,
@@ -618,7 +618,8 @@ class Tagger:
                 example_id = 0
                 for line in f:
                     line = line.strip()
-                    if line.startswith("-DOCSTART-") or line == "" or line == "<utt>":
+                    if line == "<utt>": line = "" #support old mbt-style
+                    if line == "":
                         sys.stdout.write(line + "\n")
                         if not predictions[example_id]:
                             example_id += 1
