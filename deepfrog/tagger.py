@@ -634,7 +634,7 @@ class Tagger:
     @staticmethod
     def argument_parser(parser=None):
         if parser is None:
-            parser = argparse.ArgumentParser()
+            parser = argparse.ArgumentParser(description="DeepFrog Tagger", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         # Required parameters
         parser.add_argument(
