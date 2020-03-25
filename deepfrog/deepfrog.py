@@ -21,6 +21,14 @@ else:
 
 REQUIREDFIELDS = ('name','module','foliatype','foliaset')
 
+MODULES = {
+    "Tagger": Tagger,
+}
+
+logger = logging.getLogger(__name__)
+
+
+
 class ConfigurationError(Exception):
     pass
 
@@ -28,11 +36,31 @@ class DeepFrog:
     def __init__(self, **kwargs):
         if 'conf' not in kwargs:
             raise ConfigurationError("No configuration specified")
+        if 'logger' in kwargs:
+            self.logger = kwargs['logger']
+        else:
+            self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialising DeepFrog")
 
         self.confdir = kwargs['confdir'] if 'confdir' in kwargs else DEFAULTCONFDIR
+        self.logger.info("Configuration directory: %s", self.configdir)
+
         self.load_configuration(kwargs['conf'])
 
+        #Initialize
+        self.logger.info("Loading modules")
+        self.modules = []
+        for module in self.config['modules']:
+            self.logger.info("Loading module %s" , module['name'])
+            if not kwargs['skip'] or (kwargs['skip'] and module['name'] not in kwargs['skip'].split(",")):
+                ModuleClass = MODULES[module['module']]
+                parameters = module['parameters']
+                parameters['logger'] = self.logger
+                self.modules.append(ModuleClass(**parameters))
+
     def load_configuration(self, configfile):
+        self.logger.info("Loading configuration %s", configfile)
+
         if configfile[:-4] != ".yml" or configfile[:-5] != ".yaml":
             configfile += ".yml"
 
@@ -95,8 +123,16 @@ class DeepFrog:
         return parser
 
 def main():
+    # Setup logging
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=logging.INFO,
+    )
+
     args = DeepFrog.argument_parser().parse_args()
     deepfrog = DeepFrog(**args.__dict__)
+
 
 if __name__ == '__main__':
     main()
