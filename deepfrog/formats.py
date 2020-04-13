@@ -22,8 +22,12 @@ class TaggerFormat:
 
 
 
-    def from_xml(inputfilename, outputfilename, **kwargs):
-        doc = folia.Document(file=inputfilename)
+    @staticmethod
+    def from_xml(inputfile, outputfilename, **kwargs):
+        if isinstance(inputfile, folia.Document):
+            doc = inputfile
+        else:
+            doc = folia.Document(file=inputfile)
         with open(outputfilename,'w',encoding='utf-8') as fout:
             for sentence in doc.sentences():
                 for token in sentence.words():
