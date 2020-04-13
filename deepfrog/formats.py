@@ -28,9 +28,5 @@ class TaggerFormat:
             for sentence in doc.sentences():
                 for token in sentence.words():
                     print(token, file=fout)
-
             fout.write("\n")
-
-
-
 

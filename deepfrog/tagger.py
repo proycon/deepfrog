@@ -314,8 +314,8 @@ class Tagger:
                         if (
                             self.args.local_rank == -1 and self.args.evaluate_during_training
                         ):  # Only evaluate when single GPU otherwise metrics may not average well
-                            results, _ = self.evaluate(mode="dev")
-                            for key, value in results.items():
+                            scores, _ = self.evaluate(mode="dev")
+                            for key, value in scores.items():
                                 tb_writer.add_scalar("eval_{}".format(key), value, global_step)
                         tb_writer.add_scalar("lr", scheduler.get_lr()[0], global_step)
                         tb_writer.add_scalar("loss", (tr_loss - logging_loss) / self.args.logging_steps, global_step)
@@ -432,7 +432,7 @@ class Tagger:
             logger.info("DEBUG eval reference label list: %s", ref_label_list)
             logger.info("DEBUG eval output label list: %s", preds_list)
 
-        results = {
+        scores = {
             "instancecount": len(preds_list),
             "loss": eval_loss,
             "precision": precision_score(ref_label_list, preds_list),
@@ -440,11 +440,11 @@ class Tagger:
             "f1": f1_score(ref_label_list, preds_list),
         }
 
-        logger.info("***** Evaluation results %s *****", prefix)
-        for key in sorted(results.keys()):
-            logger.info("  %s = %s", key, str(results[key]))
+        logger.info("***** Evaluation scores %s *****", prefix)
+        for key in sorted(scores.keys()):
+            logger.info("  %s = %s", key, str(scores[key]))
 
-        return results, preds_list
+        return scores, preds_list
 
 
     def load_labels(self):
@@ -586,10 +586,10 @@ class Tagger:
                 global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
                 self.model = self.model_class.from_pretrained(checkpoint)
                 self.model.to(self.args.device)
-                result, _ = self.evaluate(dev_file, mode="dev", prefix=global_step)
+                scores, _ = self.evaluate(dev_file, mode="dev", prefix=global_step)
                 if global_step:
-                    result = {"{}_{}".format(global_step, k): v for k, v in result.items()}
-                dev_evaluation.update(result)
+                    scores = {"{}_{}".format(global_step, k): v for k, v in scores.items()}
+                dev_evaluation.update(scores)
             dev_filename = os.path.basename(dev_file)
             output_eval_file = dev_filename + "_evaluation.log"
             with open(output_eval_file, "w") as writer:
@@ -602,15 +602,15 @@ class Tagger:
             self.tokenizer = self.tokenizer_class.from_pretrained(self.args.model_dir, do_lower_case=self.args.do_lower_case)
             self.model = self.model_class.from_pretrained(self.args.model_dir)
             self.model.to(self.args.device)
-            result, predictions = self.evaluate(test_file, mode="test")
+            scores, predictions = self.evaluate(test_file, mode="test")
 
-            # Save evaluation results
+            # Save evaluation scoress
             test_filename = os.path.basename(test_file)
             output_eval_file = test_filename + "_evaluation.log"
             with open(output_eval_file, "w") as writer:
-                for key in sorted(result.keys()):
-                    writer.write("{} = {}\n".format(key, str(result[key])))
-            test_evaluation = result
+                for key in sorted(scores.keys()):
+                    writer.write("{} = {}\n".format(key, str(scores[key])))
+            test_evaluation = scores
 
             if self.args.debug:
                 self.logger.info("DEBUG outputted predictions: %s", predictions)

@@ -26,7 +26,7 @@ class TaggerInputDataset:
         self.instances = [] #corresponds to sentences
         self.features = [] #instances after conversion to features
         self.labelset = set()
-        self.labelsonly = labelsonly
+        self.labelsonly = labelsonly #if set, only gathers labels (updating self.labelset, do not load the actual instances)
         if logger:
             self.logger = logger
         else:
