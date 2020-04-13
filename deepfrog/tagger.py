@@ -59,6 +59,7 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 from deepfrog.data import TaggerInputDataset #convert_examples_to_features, get_labels, read_examples_from_file
+from deepfrog.formats import TaggerFormat
 
 
 try:
@@ -100,6 +101,8 @@ class AttrDict(dict):
 
 
 class Tagger:
+    InputFormat = TaggerFormat
+
     def __init__(self, **kwargs):
         self.args = AttrDict()
         self.args.update(kwargs)
@@ -623,13 +626,16 @@ class Tagger:
                         sys.stdout.write(line + "\n")
                         if not predictions[example_id]:
                             example_id += 1
+                            token_id = 0
                     elif predictions[example_id]:
-                        test_output_item = (line.split("\t")[0], predictions[example_id].pop(0))
-                        sys.stdout.write("{}\t{}\n".format(test_output_item[0], test_output_item[1]))
+                        test_output_item = ((example_id,token_id), line.split("\t")[0], predictions[example_id].pop(0))
+                        token_id += 1
+                        test_output.append(test_output_item)
+                        sys.stdout.write("{}\t{}\n".format(test_output_item[1], test_output_item[2]))
                     else:
                         self.logger.warning("No prediction for #%d '%s' (maximum length exceeded?)", example_id, line.split()[0])
 
-        return dev_evaluation, test_output, test_evaluation
+        return {'dev_evaluation': dev_evaluation, 'test_output': test_output, 'test_evaluation':test_evaluation}
 
     @staticmethod
     def argument_parser(parser=None):

@@ -45,7 +45,12 @@ class DeepFrog:
         self.confdir = kwargs['confdir'] if 'confdir' in kwargs else DEFAULTCONFDIR
         self.logger.info("Configuration directory: %s", self.configdir)
 
+        self.input_cache_dir = kwargs['input_cache_dir'] if 'input_cache_dir' in kwargs else '.'
+        self.logger.info("Input cache dir: %s", self.input_cache_dir)
+
         self.load_configuration(kwargs['conf'])
+
+        self.args = kwargs
 
         #Initialize
         self.logger.info("Loading modules")
@@ -107,6 +112,19 @@ class DeepFrog:
                 for key, value in module['parameters'].items():
                     if isinstance(value, str):
                         module['parameters'][key] = value.replace("$ROOT", self.confdir)
+                        module['parameters'][key] = value.replace("$INPUT_CACHE_DIR", self.args['input_cache_dir'])
+
+    def process(self, inputfile, outputfile, inputformat, outputformat, **kwargs):
+        """Process an entire document"""
+        for module in self.modules:
+            #Convert the input file to something the module can handle (moduleinputfile)
+            moduleinputfile = os.path.join(self.input_cache_dir, os.path.basename(inputfile) + "." + module.InputFormat.extension)
+            if not os.path.exists(moduleinputfile): #is it cached already?
+                if hasattr(module.InputFormat,"from_" +  inputformat):
+                    getattr(module.InputFormat,"from_" + inputformat)(inputfile, moduleinputfile, **kwargs)
+                else:
+                    raise Exception("Module " + str(module.__class__.__name__) + " can't handle input format " + str(inputformat))
+            output = module(test_file=inputfile)
 
     @staticmethod
     def argument_parser(parser=None):
@@ -116,10 +134,17 @@ class DeepFrog:
         parser = argparse.ArgumentParser(description="DeepFrog", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         parser.add_argument('-d','--outputdir', type=str,help="Output directory", action='store',default=".",required=False)
         parser.add_argument('--confdir', type=str,help="Configuration directory: the location where deepfrog configuration and models can be found", action='store',default=DEFAULTCONFDIR,required=False)
-        parser.add_argument('-f','--format', type=str,help="Output format. Can be set to tsv for tab-seperated (columned) output, xml for FoLiA XML. If not set, the default will be tsv for plain text input, xml for FoLiA XML input.", action='store',required=False)
+        parser.add_argument('-f','--format', type=str,help="Output format. Can be set to tsv for tab-separated (columned) output, xml for FoLiA XML. If not set, the default will be tsv for plain text input, xml for FoLiA XML input.", action='store',required=False)
+        parser.add_argument('--inputformat', type=str,help="Input format. Can be set to txt for plain text or xml for FoLiA XML", action='store',required=False)
         parser.add_argument('-c','--conf', type=str, help="DeepFrog configuration file")
         parser.add_argument('-s','--skip', type=str, help="Skip the specified modules, takes a comma separated list of module names (names differ per configuration)")
-        parser.add_argument('input file', nargs='+', help="Input file (plain text or FoLiA XML)")
+        parser.add_argument(
+            "--input_cache_dir",
+            default=".",
+            type=str,
+            help="Where do you want to store cached data for the input data? (defaults to current working directory)",
+        )
+        parser.add_argument('inputfiles', nargs='+', help="Input file (plain text or FoLiA XML)")
         return parser
 
 def main():
@@ -132,6 +157,34 @@ def main():
 
     args = DeepFrog.argument_parser().parse_args()
     deepfrog = DeepFrog(**args.__dict__)
+    for inputfile in args.inputfiles:
+        if inputfile.lower().endswith(".txt"):
+            inputformat = "txt"
+            inputbase = inputfile[:-4]
+        elif inputfile.lower().endswith(".xml"):
+            inputformat = "xml"
+            inputbase = inputfile[:-4]
+            if inputbase.lower().endswith(".folia"):
+                inputbase = inputbase[:-6]
+        elif args.inputformat:
+            inputformat = args.inputformat
+        else:
+            raise Exception("Unable to derived input format from file extension, please set explicitly with --inputformat")
+
+        if args.outputformat:
+            outputformat = args.outputformat
+        elif inputformat == "txt":
+            outputformat = "tsv"
+        elif inputformat == "xml":
+            outputformat = "xml"
+
+        if outputformat == "xml":
+            outputfile = os.path.join(args.outputdir, inputbase + '.folia.xml')
+        else:
+            outputfile = os.path.join(args.outputdir, inputbase + '.' + outputformat)
+
+        deepfrog.process(inputfile, outputfile, inputformat, outputformat)
+
 
 
 if __name__ == '__main__':
