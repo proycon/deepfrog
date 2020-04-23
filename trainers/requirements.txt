@@ -1,0 +1,6 @@
+transformers >= 2.8.0
+torch >= 1.4.0
+numpy
+seqeval
+tqdm
+tensorboardX
