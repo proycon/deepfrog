@@ -1,6 +1,10 @@
 import folia.main as folia
 
-class TaggerFormat:
+
+class InputFormat:
+    pass
+
+class TaggerFormat(InputFormat):
     """A simple format, one token per line, class in second column, empty line delimites sentences"""
 
     extension = "tagger"
@@ -31,7 +35,7 @@ class TaggerFormat:
 
 
     @staticmethod
-    def from_xml(inputfile, outputfilename, **kwargs):
+    def from_xml(inputfile, outputfilename: str, **kwargs):
         alignment = []
         if isinstance(inputfile, folia.Document):
             doc = inputfile
@@ -44,4 +48,26 @@ class TaggerFormat:
                     alignment.append((sentencenr,tokennr,token.id))
                 fout.write("\n")
         return alignment
+
+
+class OutputFormat:
+    @staticmethod
+    def consolidate(output):
+        """Consolidate the output layers"""
+        #TODO
+
+class JSONOutput(OutputFormat):
+    extension = "json"
+
+    def __init__(self, output):
+        self.consolidate(output)
+
+class FoLiAXMLOutput(OutputFormat):
+    extension = "folia.xml"
+
+    pass
+
+class TSVOutput(OutputFormat):
+    extension = "tsv"
+    pass
 

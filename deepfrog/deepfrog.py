@@ -8,6 +8,7 @@ import logging
 import random
 import shutil
 import yaml
+import pickle
 
 from deepfrog.tagger import Tagger
 from deepfrog import VERSION
@@ -116,15 +117,25 @@ class DeepFrog:
 
     def process(self, inputfile, outputfile, inputformat, outputformat, **kwargs):
         """Process an entire document"""
+        output = {} #each module will write an output layer
         for module in self.modules:
             #Convert the input file to something the module can handle (moduleinputfile)
             moduleinputfile = os.path.join(self.input_cache_dir, os.path.basename(inputfile) + "." + module.InputFormat.extension)
-            if not os.path.exists(moduleinputfile): #is it cached already?
+            if os.path.exists(moduleinputfile): #is it cached already?
+                with open(moduleinputfile + ".alignment",'rb') as f:
+                    alignment = pickle.load(f)
+            else:
                 if hasattr(module.InputFormat,"from_" +  inputformat):
-                    getattr(module.InputFormat,"from_" + inputformat)(inputfile, moduleinputfile, **kwargs)
+                    #create the intermediate input file from the original one and return the alignment
+                    alignment = getattr(module.InputFormat,"from_" + inputformat)(inputfile, moduleinputfile, **kwargs)
+                    #cache the alignment for next time
+                    with open(moduleinputfile + ".alignment",'wb') as f:
+                        pickle.dump(alignment, f)
                 else:
                     raise Exception("Module " + str(module.__class__.__name__) + " can't handle input format " + str(inputformat))
-            output = module(test_file=inputfile)
+            #call the module
+            output[module.name] = module(test_file=moduleinputfile)
+        return output
 
     @staticmethod
     def argument_parser(parser=None):
