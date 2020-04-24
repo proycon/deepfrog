@@ -104,7 +104,7 @@ process run_ner {
 
     if [ ! -z "$cache_dir" ]; then
         extra="--cache_dir=${cache_dir}"
-    else:
+    else
         extra=""
     fi
 
