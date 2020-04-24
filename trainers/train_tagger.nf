@@ -142,7 +142,9 @@ process convert_to_npz {
 
     script:
     """
-    #!${virtualenv}/bin/python
+    #!/usr/bin/python3
+    if "$virtualenv" != "":
+        exec(open("$virtualenv/bin/activate_this.py")).read(), {'__file__': "$virtualenv/bin/activate_this.py"})
 
     weights = torch.load("$model", map_location='cpu')
     nps = {}
@@ -152,6 +154,8 @@ process convert_to_npz {
 
     np.savez('model.npz', **nps)
     """
+
+
 }
 
 process convert_tensor {
