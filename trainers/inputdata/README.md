@@ -9,6 +9,8 @@ Reference papers:
 * Ineke Schuurman, Veronique Hoste & Paola Monachesi (2009) - [Cultivating Trees: Adding Several Semantic Layers to the Lassy Treebank in SoNaR ](https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.332.8142)
 * Bart DeSmet & Veronique Hoste (2013) - [Fine-grained Dutch Named Entity Recognition](https://biblio.ugent.be/publication/4246431/file/5787347.pdf) - Language Resources and Evaluation. 48. http://dx.doi.org/10.1007/s10579-013-9255-y
 
+The original text is from the Lassy Klein corpus.
+
 Note: Data set splits are our own!
 
 Size (wc output):
