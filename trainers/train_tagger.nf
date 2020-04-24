@@ -65,7 +65,7 @@ process extract_labels {
 
     script:
     """
-    cat "$traindata" "$devdata" "$testdata" | cut -f 2 | grep -v "^\$" | sort | uniq > labels.txt
+    cat "$traindata" "$devdata" "$testdata" | cut -d " " -f 2 | grep -v "^\$" | sort | uniq > labels.txt
     """
 
 }
