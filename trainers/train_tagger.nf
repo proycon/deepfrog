@@ -50,9 +50,9 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
 
 process extract_labels {
     input:
-    file traindata from Channel.frompath(params.traindata)
-    file devdata from Channel.frompath(params.devdata)
-    file testdata from Channel.frompath(params.testdata)
+    file traindata from Channel.fromPath(params.traindata)
+    file devdata from Channel.fromPath(params.devdata)
+    file testdata from Channel.fromPath(params.testdata)
     val virtualenv from params.virtualenv
 
     output:
@@ -69,12 +69,12 @@ process run_ner {
     publishDir params.name, pattern: "{pytorch_model.bin,*.json,vocab.txt,*results.txt}", mode: 'copy', overwrite: true
 
     input:
-    file "train.txt" from Channel.frompath(params.traindata)
-    file "dev.txt" from Channel.frompath(params.devdata)
-    file "test.txt" from Channel.frompath(params.testdata)
+    file "train.txt" from Channel.fromPath(params.traindata)
+    file "dev.txt" from Channel.fromPath(params.devdata)
+    file "test.txt" from Channel.fromPath(params.testdata)
     file labels from labelsfile
-    file run_ner_script from Channel.frompath(params.examplespath + "/ner/run_ner.py")
-    file ner_utils_script from Channel.frompath(params.examplespath + "/ner/utils_ner.py")
+    file run_ner_script from Channel.fromPath(params.examplespath + "/ner/run_ner.py")
+    file ner_utils_script from Channel.fromPath(params.examplespath + "/ner/utils_ner.py")
     val model from params.model
     val epochs from params.num_train_epochs
     val batch_size from params.per_gpu_train_batch_size
