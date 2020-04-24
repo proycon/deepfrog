@@ -69,7 +69,20 @@ process extract_labels {
 
     script:
     """
+    if [ ! -f "$traindata" ]; then
+        echo "Traindata not found!">&2
+        exit 2
+    fi
+    if [ ! -f "$devdata" ]; then
+        echo "Development data not found!">&2
+        exit 2
+    fi
+    if [ ! -f "$testdata" ]; then
+        echo "Test data not found!">&2
+        exit 2
+    fi
     cat "$traindata" "$devdata" "$testdata" | cut -d " " -f 2 | grep -v "^\$" | sort | uniq > labels.txt
+    exit \$?
     """
 
 }
