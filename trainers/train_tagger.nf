@@ -24,23 +24,23 @@ params.converttensor = params.virtualenv != "" ? params.virtualenv + "/rust-bert
 
 if (!params.containsKey('name') || !params.containsKey('traindata') || !params.containsKey('testdata') || !params.containsKey('devdata') || !params.containsKey('model')) {
 
-    log.info "Usage:
+    log.info "Usage:"
     log.info " train_tagger.nf [options]"
     log.info ""
     log.info "Mandatory parameters:"
-    log.info " --name [name] - A name for the resulting model, a directory with this name will be created"
-    log.info " --traindata [file] - The datafile to train on (TSV format, see specification below)"
-    log.info " --devdata [file] - The datafile to run tuning on (TSV format, see specification below)"
-    log.info " --testdata [file] - The datafile to test on (TSV format, see specification below)"
-    log.info " --model [model] - Tranformers' model name or path (e.g. bert-base-multilingual-cased)"
-    log.info " --examplespath [path] - Path to the transformers examples source code on your system (not necessarily needs to be available on all nodes)"
-    log.info " --converttensor [path] - Full path to the convert-tensor binary form bert-rust (assumes this is available on all nodes)"
+    log.info "  --name [name] - A name for the resulting model, a directory with this name will be created"
+    log.info "  --traindata [file] - The datafile to train on (TSV format, see specification below)"
+    log.info "  --devdata [file] - The datafile to run tuning on (TSV format, see specification below)"
+    log.info "  --testdata [file] - The datafile to test on (TSV format, see specification below)"
+    log.info "  --model [model] - Tranformers' model name or path (e.g. bert-base-multilingual-cased)"
+    log.info "  --examplespath [path] - Path to the transformers examples source code on your system (not necessarily needs to be available on all nodes)"
+    log.info "  --converttensor [path] - Full path to the convert-tensor binary form bert-rust (assumes this is available on all nodes)"
     log.info ""
     log.info "Optional parameters:"
-    log.info " --virtualenv [path] - The Python virtual environment to use (autodetected if you run this script from within a virtualenv). Assumes this is available at the same path on every computing node!"
+    log.info "  --virtualenv [path] - The Python virtual environment to use (autodetected if you run this script from within a virtualenv). Assumes this is available at the same path on every computing node!"
     log.info ""
     log.info "Optional parameters inherited from Transformers' run_ner.py (see there for a description):"
-    log.info " --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length"
+    log.info "  --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length"
     log.info ""
     log.info "File format:"
     log.info "  TSV - Tab Separated; one token per line, two columns (token,tag). Empty lines delimit sentences."
@@ -60,13 +60,13 @@ process extract_labels {
 
     script:
     """
-    cat $traindata $devdata $testdata | cut -f 2 | grep -v "^\$" | sort | uniq > labels.txt
+    cat "$traindata" "$devdata" "$testdata" | cut -f 2 | grep -v "^\$" | sort | uniq > labels.txt
     """
 
 }
 
 process run_ner {
-    publishDir params.name, pattern: "{pytorch_model.bin,*.json,vocab.txt}", mode: 'copy', overwrite: true
+    publishDir params.name, pattern: "{pytorch_model.bin,*.json,vocab.txt,*results.txt}", mode: 'copy', overwrite: true
 
     input:
     file "train.txt" from Channel.frompath(params.traindata)
@@ -86,6 +86,8 @@ process run_ner {
     file "pytorch_model.bin" into pytorch_model
     file "config.json" into configfile
     file "vocab.txt" into vocabfile
+    file "eval_results.txt" into dev_results
+    file "test_results.txt" into test_results
 
     script:
     """
