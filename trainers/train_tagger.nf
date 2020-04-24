@@ -19,10 +19,11 @@ params.num_train_epochs = 3
 params.save_steps = 20000
 params.max_seq_length = 128
 params.seed = 1
-params.examplespath = params.virtualenv != "" ? params.virtualenv + "/transformers/examples" : "transformers/examples"
-params.converttensor = params.virtualenv != "" ? params.virtualenv + "/rust-bert/target/release/convert-tensor" : "convert-tensor"
+params.examplespath = "transformers/examples"
+params.converttensor = "rust-bert/target/release/convert-tensor"
 params.model_type = "bert"
 params.cache_dir = ""
+params.outputdir = "."
 
 if (!params.containsKey('name') || !params.containsKey('traindata') || !params.containsKey('testdata') || !params.containsKey('devdata') || !params.containsKey('model')) {
 
@@ -40,6 +41,7 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
     log.info ""
     log.info "Optional parameters:"
     log.info "  --virtualenv [path] - The Python virtual environment to use (autodetected if you run this script from within a virtualenv). Assumes this is available at the same path on every computing node!"
+    log.info "  --outputdir [path] - Output directory"
     log.info ""
     log.info "Optional parameters inherited from Transformers' run_ner.py (see there for a description):"
     log.info "  --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length, --model_type, --cache_dir"
@@ -71,7 +73,7 @@ process extract_labels {
 }
 
 process run_ner {
-    publishDir params.name, pattern: "{pytorch_model.bin,*.json,vocab.txt,*results.txt}", mode: 'copy', overwrite: true
+    publishDir params.outputdir + "/" + params.name, pattern: "{pytorch_model.bin,*.json,vocab.txt,*results.txt}", mode: 'copy', overwrite: true
 
     input:
     file "train.txt" from Channel.fromPath(params.traindata)
@@ -138,7 +140,7 @@ process convert_to_npz {
 }
 
 process convert_tensor {
-    publishDir params.name, pattern: "*.ot", mode: 'copy', overwrite: true
+    publishDir params.outputdir + "/" + params.name, pattern: "*.ot", mode: 'copy', overwrite: true
 
     input:
     file model from npz_model
