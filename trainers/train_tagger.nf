@@ -21,6 +21,7 @@ params.max_seq_length = 128
 params.seed = 1
 params.examplespath = params.virtualenv != "" ? params.virtualenv + "/transformers/examples" : "transformers/examples"
 params.converttensor = params.virtualenv != "" ? params.virtualenv + "/rust-bert/target/release/convert-tensor" : "convert-tensor"
+params.cache_dir = ""
 
 if (!params.containsKey('name') || !params.containsKey('traindata') || !params.containsKey('testdata') || !params.containsKey('devdata') || !params.containsKey('model')) {
 
@@ -40,7 +41,7 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
     log.info "  --virtualenv [path] - The Python virtual environment to use (autodetected if you run this script from within a virtualenv). Assumes this is available at the same path on every computing node!"
     log.info ""
     log.info "Optional parameters inherited from Transformers' run_ner.py (see there for a description):"
-    log.info "  --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length"
+    log.info "  --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length, --cache_dir"
     log.info ""
     log.info "File format:"
     log.info "  TSV - Tab Separated; one token per line, two columns (token,tag). Empty lines delimit sentences."
@@ -80,6 +81,7 @@ process run_ner {
     val batch_size from params.per_gpu_train_batch_size
     val seed from params.seed
     val save_steps from params.save_steps
+    val cache_dir from params.cache_dir
     val virtualenv from params.virtualenv
 
     output:
@@ -97,7 +99,13 @@ process run_ner {
     fi
     set -u
 
-    python3 $run_ner_script --data_dir ./ --output_dir ./ --labels $labels --model_name_or_path $model --num_train_epochs $epochs --seed $seed --per_gpu_train_batch_size $batch_size --save_steps $save_steps --do_train --do_eval --do_predict
+    if [ ! -z "$cache_dir" ]; then
+        extra="--cache_dir=${cache_dir}"
+    else:
+        extra=""
+    fi
+
+    python3 $run_ner_script \$extra --data_dir ./ --output_dir ./ --labels $labels --model_name_or_path $model --num_train_epochs $epochs --seed $seed --per_gpu_train_batch_size $batch_size --save_steps $save_steps --do_train --do_eval --do_predict
     exit \$?
     """
 }
