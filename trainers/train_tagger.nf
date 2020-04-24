@@ -10,6 +10,7 @@ log.info "DeepFrog Tagger/NER trainer"
 log.info "----------------------------------"
 
 def env = System.getenv()
+def basedir = new File(".").getCanonicalPath()
 
 params.virtualenv =  env.containsKey('VIRTUAL_ENV') ? env['VIRTUAL_ENV'] : ""
 
@@ -19,11 +20,12 @@ params.num_train_epochs = 3
 params.save_steps = 20000
 params.max_seq_length = 128
 params.seed = 1
-params.examplespath = "transformers/examples"
-params.converttensor = "rust-bert/target/release/convert-tensor"
+params.examplespath = basedir + "/transformers/examples"
+params.converttensor = basedir + "/rust-bert/target/release/convert-tensor"
 params.model_type = "bert"
 params.cache_dir = ""
 params.outputdir = "."
+
 
 if (!params.containsKey('name') || !params.containsKey('traindata') || !params.containsKey('testdata') || !params.containsKey('devdata') || !params.containsKey('model')) {
 

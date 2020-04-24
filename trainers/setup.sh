@@ -6,10 +6,9 @@ fi
 
 if [ ! -z "$VIRTUAL_ENV" ]; then
     echo "You are already in a virtualenv, refusing to setup a new one"
-    exit 2
 fi
 
-if [ ! -d "env" ]; then
+if [ ! -d "env" ] && [ -z "$VIRTUAL_ENV" ]; then
     echo "Making virtual environment"
     virtualenv --python=python3 env || exit 2
     . env/bin/activate
@@ -28,6 +27,7 @@ fi
 if [ ! -e "rust-bert" ]; then
     echo "Downloading rust-bert"
     git clone https://github.com/guillaume-be/rust-bert/
+    cd rust-bert
     cargo build --release
     cd ..
 fi
