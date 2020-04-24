@@ -11,11 +11,13 @@ started straight away.
 from transformers import AutoTokenizer, AutoModel, pipeline
 
 modelname = "proycon/bert-ner-cased-sonar1-nld"
-tokenizer = AutoTokenizer.from_pretrained(modelname)
-model = AutoModel.from_pretrained(modelname)
 
+#Load manually:
+#tokenizer = Auto#Or use pipelines:Tokenizer.from_pretrained(modelname)
+#model = AutoModel.from_pretrained(modelname)
 
-nlp = pipeline('ner')
+#Or use pipelines:
+nlp = pipeline('ner', model=modelname, tokenizer=modelname)
 result = nlp("Amsterdam is de hoofdstad van Nederland, maar de regering zetelt in Den Haag.")
 print(result)
 
