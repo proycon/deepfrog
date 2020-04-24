@@ -21,6 +21,7 @@ params.max_seq_length = 128
 params.seed = 1
 params.examplespath = params.virtualenv != "" ? params.virtualenv + "/transformers/examples" : "transformers/examples"
 params.converttensor = params.virtualenv != "" ? params.virtualenv + "/rust-bert/target/release/convert-tensor" : "convert-tensor"
+params.model_type = "bert"
 params.cache_dir = ""
 
 if (!params.containsKey('name') || !params.containsKey('traindata') || !params.containsKey('testdata') || !params.containsKey('devdata') || !params.containsKey('model')) {
@@ -41,7 +42,7 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
     log.info "  --virtualenv [path] - The Python virtual environment to use (autodetected if you run this script from within a virtualenv). Assumes this is available at the same path on every computing node!"
     log.info ""
     log.info "Optional parameters inherited from Transformers' run_ner.py (see there for a description):"
-    log.info "  --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length, --cache_dir"
+    log.info "  --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length, --model_type, --cache_dir"
     log.info ""
     log.info "File format:"
     log.info "  TSV - Tab Separated; one token per line, two columns (token,tag). Empty lines delimit sentences."
@@ -80,6 +81,7 @@ process run_ner {
     file run_ner_script from Channel.fromPath(params.examplespath + "/ner/run_ner.py")
     file ner_utils_script from Channel.fromPath(params.examplespath + "/ner/utils_ner.py")
     val model from params.model
+    val model_type from params.model_type
     val epochs from params.num_train_epochs
     val batch_size from params.per_gpu_train_batch_size
     val seed from params.seed
@@ -108,7 +110,7 @@ process run_ner {
         extra=""
     fi
 
-    python3 $run_ner_script \$extra --data_dir ./ --output_dir ./ --labels $labels --model_name_or_path $model --num_train_epochs $epochs --seed $seed --per_gpu_train_batch_size $batch_size --save_steps $save_steps --do_train --do_eval --do_predict
+    python3 $run_ner_script \$extra --data_dir ./ --output_dir ./ --labels $labels --model_name_or_path $model --model_type $model_type --num_train_epochs $epochs --seed $seed --per_gpu_train_batch_size $batch_size --save_steps $save_steps --do_train --do_eval --do_predict
     exit \$?
     """
 }
