@@ -23,9 +23,9 @@ Size (wc output):
 
 Checksums (md5sum):
 ```
-3341fddd1f3874c9b78c6df974577815  sonar1-dev-nld.dev.tsv
-9208fd0f07040d38403f3cfa3fff8466  sonar1-ner-nld.test.tsv
-af6657c0c986363d2d1f2a91c2ea1d39  sonar1-ner-nld.train.tsv
+531270c127b1836ecbd6a55ae1bfada3  sonar1-ner-nld.dev.tsv
+0290a9270f3d90cd55a73b9da72d1012  sonar1-ner-nld.test.tsv
+28e8a633a056505efcbcdc400d325f53  sonar1-ner-nld.train.tsv
 ```
 
 ## Part of Speech Tagging
@@ -44,7 +44,7 @@ Size (wc output):
 Checksums (md5sum):
 
 ```
-0ec634fe3f15ac6d62429aca4d3c1785  frog1.1-pos-nld.dev.tsv
-8aaf0b167c4063baeae2ee8aa1a35ab4  frog1.1-pos-nld.test.tsv
-6ac9f167f9e0224afb58593a2c92e202  frog1.1-pos-nld.train.tsv
+6429be74794f05a79cb3fef7df0412be  frog1.1-pos-nld.dev.tsv
+bead336dd429484ff7318bd9c87df0cc  frog1.1-pos-nld.test.tsv
+ff61b7e64c6c1935efd8fbb02d528729  frog1.1-pos-nld.train.tsv
 ```
