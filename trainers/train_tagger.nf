@@ -146,6 +146,9 @@ process convert_to_npz {
     if "$virtualenv" != "":
         exec(open("$virtualenv/bin/activate_this.py")).read(), {'__file__': "$virtualenv/bin/activate_this.py"})
 
+    import numpy as np
+    import torch
+
     weights = torch.load("$model", map_location='cpu')
     nps = {}
     for k, v in weights.items():
