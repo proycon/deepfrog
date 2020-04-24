@@ -139,7 +139,7 @@ process convert_tensor {
     publishDir params.name, pattern: "*.ot", mode: 'copy', overwrite: true
 
     input:
-    file model from
+    file model from npz_model
     val virtualenv from params.virtualenv
     val converttensor from params.converttensor
 
