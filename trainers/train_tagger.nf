@@ -49,12 +49,15 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
 
 }
 
+train = Channel.fromPath(params.traindata)
+dev = Channel.fromPath(params.devdata)
+test = Channel.fromPath(params.testdata)
+
 process extract_labels {
     input:
-    file traindata from Channel.fromPath(params.traindata)
-    file devdata from Channel.fromPath(params.devdata)
-    file testdata from Channel.fromPath(params.testdata)
-    val virtualenv from params.virtualenv
+    file traindata from train
+    file devdata from dev
+    file testdata from test
 
     output:
     file "labels.txt" into labelsfile
