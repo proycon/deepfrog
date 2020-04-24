@@ -27,3 +27,24 @@ Checksums (md5sum):
 9208fd0f07040d38403f3cfa3fff8466  sonar1-ner-nld.test.tsv
 af6657c0c986363d2d1f2a91c2ea1d39  sonar1-ner-nld.train.tsv
 ```
+
+## Part of Speech Tagging
+
+Based on Frog.mbt.1.1, a corrected version of Frog.mbt.1.1 where the 43 LET() errors have been fixed. A merge of cgn-wotan-dcoi.mbt with lassy-klein
+
+Note: Data set splits are our own!
+
+Size (wc output):
+```
+     1096      1992     22894 frog1.1-pos-nld.dev.tsv
+     1148      2096     23886 frog1.1-pos-nld.test.tsv
+ 11775931  21565528 246115172 frog1.1-pos-nld.train.tsv
+```
+
+Checksums (md5sum):
+
+```
+0ec634fe3f15ac6d62429aca4d3c1785  frog1.1-pos-nld.dev.tsv
+8aaf0b167c4063baeae2ee8aa1a35ab4  frog1.1-pos-nld.test.tsv
+6ac9f167f9e0224afb58593a2c92e202  frog1.1-pos-nld.train.tsv
+```
