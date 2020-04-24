@@ -31,9 +31,9 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
     log.info ""
     log.info "Mandatory parameters:"
     log.info "  --name [name] - A name for the resulting model, a directory with this name will be created"
-    log.info "  --traindata [file] - The datafile to train on (TSV format, see specification below)"
-    log.info "  --devdata [file] - The datafile to run tuning on (TSV format, see specification below)"
-    log.info "  --testdata [file] - The datafile to test on (TSV format, see specification below)"
+    log.info "  --traindata [file] - The datafile to train on (two-column txt format, see specification below)"
+    log.info "  --devdata [file] - The datafile to run tuning on (two column txt format, see specification below)"
+    log.info "  --testdata [file] - The datafile to test on (two column txt format, see specification below)"
     log.info "  --model [model] - Tranformers pre-trained model name or path (e.g. bert-base-multilingual-cased)"
     log.info "  --examplespath [path] - Path to the transformers examples source code on your system (not necessarily needs to be available on all nodes)"
     log.info "  --converttensor [path] - Full path to the convert-tensor binary form bert-rust (assumes this is available on all nodes)"
@@ -45,7 +45,7 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
     log.info "  --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length, --model_type, --cache_dir"
     log.info ""
     log.info "File format:"
-    log.info "  TSV - Tab Separated; one token per line, two columns (token,tag). Empty lines delimit sentences."
+    log.info "  Two column text format - Space separated; one token per line, two columns (token,tag). Empty lines delimit sentences."
     exit 2
 
 }
