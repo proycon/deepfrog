@@ -32,7 +32,7 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
     log.info "  --traindata [file] - The datafile to train on (TSV format, see specification below)"
     log.info "  --devdata [file] - The datafile to run tuning on (TSV format, see specification below)"
     log.info "  --testdata [file] - The datafile to test on (TSV format, see specification below)"
-    log.info "  --model [model] - Tranformers' model name or path (e.g. bert-base-multilingual-cased)"
+    log.info "  --model [model] - Tranformers pre-trained model name or path (e.g. bert-base-multilingual-cased)"
     log.info "  --examplespath [path] - Path to the transformers examples source code on your system (not necessarily needs to be available on all nodes)"
     log.info "  --converttensor [path] - Full path to the convert-tensor binary form bert-rust (assumes this is available on all nodes)"
     log.info ""
