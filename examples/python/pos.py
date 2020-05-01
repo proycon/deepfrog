@@ -10,8 +10,8 @@ started straight away.
 
 from transformers import AutoTokenizer, AutoModel, pipeline
 
-modelname = "proycon/bert-pos-cased-frog-nld"
-tokenizer = "bert-base-dutch-cased"
+modelname = "proycon/bert-pos-cased-deepfrog-nld"
+tokenizer = modelname
 
 #Load manually:
 #tokenizer = Auto#Or use pipelines:Tokenizer.from_pretrained(modelname)
