@@ -1,0 +1,13 @@
+B-eve
+B-loc
+B-misc
+B-org
+B-per
+B-pro
+I-eve
+I-loc
+I-misc
+I-org
+I-per
+I-pro
+O
