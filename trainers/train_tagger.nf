@@ -88,7 +88,7 @@ process extract_labels {
 }
 
 process run_ner {
-    publishDir params.outputdir + "/" + params.name, pattern: "{pytorch_model.bin,*.json,vocab.txt,*results.txt}", mode: 'copy', overwrite: true
+    publishDir params.outputdir + "/" + params.name, pattern: "{pytorch_model.bin,*.json,vocab.txt,merges.txt,*results.txt}", mode: 'copy', overwrite: true
 
     input:
     file "train.txt" from Channel.fromPath(params.traindata)
@@ -109,7 +109,10 @@ process run_ner {
     output:
     file "pytorch_model.bin" into pytorch_model
     file "config.json" into configfile
-    file "vocab.txt" into vocabfile
+    file "special_tokens_map.json" optional true into specialtokensmap //roberta only
+    file "merges.txt" optional true into specialtokensmap //roberta only
+    file "vocab.json" optional true into vocabjson //roberta only
+    file "vocab.txt" optional true into vocabfile //bert only
     file "eval_results.txt" into dev_results
     file "test_results.txt" into test_results
 
