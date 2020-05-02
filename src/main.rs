@@ -10,16 +10,54 @@ extern crate clap;
 use clap::{Arg, App, SubCommand};
 
 extern crate rust_bert;
-use rust_bert::pipelines::ner::{NERModel,NERConfig};
+use rust_bert::pipelines::token_classification::{TokenClassificationOption,ModelType};
 
+extern crate serde;
+extern crate serde_yaml;
+#[macro_use]
+extern crate serde_derive;
 
-struct DeepFrogResources {
+#[derive(Serialize, Deserialize)]
+struct Configuration {
+    models: Vec<ModelConfiguration>
+}
+
+#[derive(Serialize, Deserialize)]
+struct ModelConfiguration {
+
+    ///FoLiA Annotation type
+    annotation_type: String,
+
+    ///FoLiA Set Definition
+    folia_set: String;
+
+    ///Model name (for local)
+    model_name: String
+
+    ///Model Type (bert, roberta, distilbert)
+    model_type: String,
+
+    ///Model url (model.ot as downloadable from Huggingface)
+    model_url: String,
+
+    ///Config url (config.json as downloadable from Huggingface)
+    config_url: String,
+
+    ///Vocab url (vocab.txt/vocab.json as downloadable from Huggingface)
+    vocab_url: String,
+
+    ///Merges url (merges.txt as downloadable from Huggingface, for Roberta)
+    merges_url: String,
 
 }
 
+
+
+/*
 impl DeepFrogResources {
     pub const POS: (&'static str, &'static str) = ("bert-ner/model.ot", "https://s3.amazonaws.com/models.huggingface.co/bert/dbmdz/bert-large-cased-finetuned-conll03-english/rust_model.ot");
 }
+*/
 
 fn main() {
     println!("Hello, world!");
