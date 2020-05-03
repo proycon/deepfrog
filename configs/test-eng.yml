@@ -10,4 +10,5 @@ models:
     config_remote: "https://cdn.huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english/config.json"
     vocab_local: "bert-large-cased-finetuned-conll03-english/vocab.txt"
     vocab_remote: "https://cdn.huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english/vocab.txt"
+    ignore_first_label: true
 

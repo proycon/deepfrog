@@ -5,6 +5,8 @@
 //use std::io;
 use std::path::{Path,PathBuf};
 use std::fs;
+use std::fs::File;
+use std::io::{Write,Read,BufReader,BufRead};
 use std::error::Error;
 use std::str::FromStr;
 use std::collections::{HashMap,HashSet};
@@ -13,10 +15,11 @@ extern crate clap;
 use clap::{Arg, App, SubCommand};
 
 extern crate rust_bert;
-use rust_bert::pipelines::token_classification::{TokenClassificationConfig, TokenClassificationOption,ConfigOption,TokenizerOption,ModelType, TokenClassificationModel};
+use rust_bert::pipelines::token_classification::{TokenClassificationConfig, TokenClassificationOption,ConfigOption,TokenizerOption,ModelType, TokenClassificationModel, Token};
 
 extern crate serde;
 extern crate serde_yaml;
+extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
@@ -71,6 +74,15 @@ struct ModelSpecification {
     #[serde(default)]
     merges_remote: Option<String>,
 
+    ///Ignore the first label, you can set it to true for NER tasks where the first label covers something like 'Outside', i.e. a non-entity
+    #[serde(default)]
+    ignore_first_label: bool,
+
+}
+
+struct ModelOutput<'a> {
+    model_name: &'a str,
+    labeled_tokens: Vec<Token>,
 }
 
 fn main() -> Result<(), Box<dyn Error + 'static>> {
@@ -100,6 +112,21 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
         std::process::exit(2);
     }
 
+    let files: Vec<_> = matches.values_of("files").unwrap().collect();
+    //checking input files exist
+    let mut all_input_found = true;
+    for (i, filename) in files.iter().enumerate() {
+        if !PathBuf::from(filename).exists() {
+            eprintln!("ERROR: Input {} not found", filename);
+            all_input_found = false;
+        }
+    }
+    if !all_input_found {
+        std::process::exit(2);
+    }
+
+
+
     let configdata = fs::read_to_string(&configfile)?;
     let config: Configuration = serde_yaml::from_str(configdata.as_str()).expect("Invalid yaml in configuration file");
     eprintln!("Loaded configuration: {}", &configfile.to_str().expect("path to string conversion"));
@@ -120,16 +147,43 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
         if let Ok(model) = TokenClassificationModel::new(modelconfig) {
             token_classification_models.push(model);
         } else {
-            eprintln!("        Error loading model!");
+            eprintln!("ERROR: Failed to load model!");
+            std::process::exit(3);
         }
     }
 
-    let files: Vec<_> = matches.values_of("files").unwrap().collect();
 
     for (i, filename) in files.iter().enumerate() {
         eprintln!("Processing file {} of {}: {} ...", i+1, files.len(), filename);
+        let result = process_text(&filename, &config, &token_classification_models);
+        for output in result.expect("unwrapping") {
+            println!("{{ \"model\": \"{}\", \"tokens\": [", output.model_name);
+            for token in output.labeled_tokens.iter() {
+                print!("{}", serde_json::to_string(&token).expect("json"));
+                println!(",")
+            }
+            println!("] }}");
+        }
     }
 
 
     Ok(())
 }
+
+
+fn process_text<'a>(filename: &str, config: &'a Configuration, models: &Vec<TokenClassificationModel>) -> Result<Vec<ModelOutput<'a>>, Box<dyn Error + 'static>> {
+    let f = File::open(filename)?;
+    let f_buffer = BufReader::new(f);
+    let lines: Vec<String> = f_buffer.lines().map(|s| s.unwrap()).collect();
+    let lines_ref: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
+    let mut output: Vec<ModelOutput> = Vec::new();
+    for (model, modelspec) in models.iter().zip(config.models.iter()) {
+        let labeled_tokens = model.predict(&lines_ref, false);
+        output.push( ModelOutput {
+            model_name: &modelspec.model_name,
+            labeled_tokens: labeled_tokens
+        });
+    }
+    Ok(output)
+}
+
