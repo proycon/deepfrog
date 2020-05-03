@@ -73,13 +73,6 @@ struct ModelSpecification {
 
 }
 
-
-struct Model {
-    model: TokenClassificationOption,
-    config: ConfigOption,
-    tokenizer: TokenizerOption,
-}
-
 fn main() -> Result<(), Box<dyn Error + 'static>> {
     let matches = App::new("DeepFrog")
         .version("0.1")
