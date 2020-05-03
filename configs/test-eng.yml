@@ -3,8 +3,11 @@ models:
   - annotation_type: entity
     folia_set: undefined
     model_name: conll03
-    model_type: bert
-    model_url: "https://cdn.huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english/rust_model.ot"
-    config_url: "https://cdn.huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english/config.json"
-    vocab_url: "https://cdn.huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english/vocab.txt"
+    model_type: Bert
+    model_local: "bert-large-cased-finetuned-conll03-english/rust_model.ot"
+    model_remote: "https://cdn.huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english/rust_model.ot"
+    config_local: "bert-large-cased-finetuned-conll03-english/config.json"
+    config_remote: "https://cdn.huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english/config.json"
+    vocab_local: "bert-large-cased-finetuned-conll03-english/vocab.txt"
+    vocab_remote: "https://cdn.huggingface.co/dbmdz/bert-large-cased-finetuned-conll03-english/vocab.txt"
 
