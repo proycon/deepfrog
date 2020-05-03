@@ -1,10 +1,10 @@
 //use std::fs::File;
 //use std::io::Read;
 //use std::fs;
-//use std::error::Error;
 //use std::fmt;
 //use std::io;
 use std::path::{Path,PathBuf};
+use std::fs;
 
 extern crate clap;
 use clap::{Arg, App, SubCommand};
@@ -17,8 +17,11 @@ extern crate serde_yaml;
 #[macro_use]
 extern crate serde_derive;
 
+use std::error::Error;
+
 #[derive(Serialize, Deserialize)]
 struct Configuration {
+    language: String,
     models: Vec<ModelConfiguration>
 }
 
@@ -29,10 +32,10 @@ struct ModelConfiguration {
     annotation_type: String,
 
     ///FoLiA Set Definition
-    folia_set: String;
+    folia_set: String,
 
     ///Model name (for local)
-    model_name: String
+    model_name: String,
 
     ///Model Type (bert, roberta, distilbert)
     model_type: String,
@@ -47,31 +50,24 @@ struct ModelConfiguration {
     vocab_url: String,
 
     ///Merges url (merges.txt as downloadable from Huggingface, for Roberta)
-    merges_url: String,
+    #[serde(default)]
+    merges_url: Option<String>,
 
 }
 
 
-
-/*
-impl DeepFrogResources {
-    pub const POS: (&'static str, &'static str) = ("bert-ner/model.ot", "https://s3.amazonaws.com/models.huggingface.co/bert/dbmdz/bert-large-cased-finetuned-conll03-english/rust_model.ot");
-}
-*/
-
-fn main() {
-    println!("Hello, world!");
+fn main() -> Result<(), Box<dyn Error + 'static>> {
     let matches = App::new("DeepFrog")
         .version("0.1")
         .author("Maarten van Gompel (proycon) <proycon@anaproy.nl>")
         .about("An NLP tool")
             //snippet hints --> addargb,addargs,addargi,addargf,addargpos
-            .arg(Arg::with_name("model")
-                .long("--model")
-                .short("-m")
-                .help("The model to use")
+            .arg(Arg::with_name("config")
+                .long("--config")
+                .short("-c")
+                .help("The DeepFrog configuration to use")
                 .takes_value(true)
-                .value_name("DIR")
+                .value_name("FILE")
                 .required(true))
             .arg(Arg::with_name("file")
                 .help("Input file")
@@ -80,15 +76,15 @@ fn main() {
                 .required(true))
         .get_matches();
 
-    let modeldir = PathBuf::from(matches.value_of("model").expect("No model supplied"));
+    let configfile = PathBuf::from(matches.value_of("config").expect("No configuration file supplied"));
 
-    if !PathBuf::from(&modeldir).is_dir() {
-        eprintln!("ERROR: Model {} not found (or not a directory)", modeldir.to_str().expect("path to string"));
+    if !PathBuf::from(&configfile).exists() {
+        eprintln!("ERROR: Configuration {} not found", configfile.to_str().expect("path to string"));
         std::process::exit(2);
     }
 
-    let config = NERConfig::new(
-        model_resource:
-    }
+    let configdata = fs::read_to_string(configfile)?;
+    let config: Configuration = serde_yaml::from_str(configdata.as_str()).expect("Invalid yaml in configuration file");
 
+    Ok(())
 }

@@ -9,3 +9,6 @@ edition = "2018"
 [dependencies]
 rust-bert = { git = "https://github.com/proycon/rust-bert", branch = "tokclasspipeline" }
 clap = "2.33.0"
+serde = "1.0.106"
+serde_yaml = "0.8.11"
+serde_derive = "1.0.106"
