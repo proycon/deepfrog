@@ -16,11 +16,11 @@ can use a variety of neural transformers.
 
 Our deliverables are multi-faceted:
 
-1. Fine-tuned network models for Dutch NLP that can be compared with [Frog](https://languagemachines.github.io/frog) and are
+1. Fine-tuned neural network **models** for Dutch NLP that can be compared with [Frog](https://languagemachines.github.io/frog) and are
     directly usable with [Huggingface's Transformers](https://github.com/huggingface/transformers) library for Python (or
     [rust-bert](https://github.com/guillaume-be/rust-bert) for Rust).
-2. Training pipelines for the above models (see ``training``).
-3. A high-performant software tool that integrates multiple models (not just limited to dutch!) and provides a single pipeline for end-users.
+2. **Training pipelines** for the above models (see ``training``).
+3. A **software tool** that integrates multiple models (not just limited to dutch!) and provides a single pipeline solution for end-users.
     * with full support for [FoLiA XML](https://proycon.github.io/folia) input/output.
     * usage is not limited to the models we provide
 
