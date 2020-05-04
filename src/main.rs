@@ -79,6 +79,10 @@ struct ModelSpecification {
     #[serde(default)]
     ignore_first_label: bool,
 
+    ///Indicates if this is a lower-cased model, in which case all input will be automatically lower-cased
+    #[serde(default)]
+    lowercase: bool,
+
 }
 
 struct ModelOutput<'a> {
@@ -146,7 +150,7 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
             None
         };
         //Load the actual configuration
-        let modelconfig = TokenClassificationConfig::new(modelspec.model_type, model_resource, config_resource, vocab_resource, merges_resource);
+        let modelconfig = TokenClassificationConfig::new(modelspec.model_type, model_resource, config_resource, vocab_resource, merges_resource, modelspec.lowercase);
 
         //Load the model
         if let Ok(model) = TokenClassificationModel::new(modelconfig) {
