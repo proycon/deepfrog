@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rust-bert = { git = "https://github.com/proycon/rust-bert", branch = "tokclasspipeline" }
+rust-bert = { path = "/home/proycon/work/rust-bert" }
 clap = "2.33.0"
 serde = "1.0.106"
 serde_yaml = "0.8.11"

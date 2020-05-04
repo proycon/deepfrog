@@ -16,6 +16,7 @@ use clap::{Arg, App, SubCommand};
 
 extern crate rust_bert;
 use rust_bert::pipelines::token_classification::{TokenClassificationConfig, TokenClassificationOption,ConfigOption,TokenizerOption,ModelType, TokenClassificationModel, Token};
+use rust_bert::resources::{Resource,RemoteResource};
 
 extern crate serde;
 extern crate serde_yaml;
@@ -135,13 +136,17 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
 
     for (i, modelspec) in config.models.iter().enumerate() {
         eprintln!("    Loading model {} of {}: {}:{}  ...", i+1, config.models.len(), modelspec.annotation_type, modelspec.model_name);
-        let merges: Option<(&str,&str)> = if let (Some(merges_local), Some(merges_remote)) = (modelspec.merges_local.as_ref(), modelspec.merges_remote.as_ref()) {
-            Some( (merges_local.as_str(), merges_remote.as_str()) )
+
+        let model_resource: Resource =  Resource::Remote(RemoteResource::from_pretrained( (modelspec.model_local.as_str(), modelspec.model_remote.as_str()) ));
+        let config_resource: Resource =  Resource::Remote(RemoteResource::from_pretrained( (modelspec.config_local.as_str(), modelspec.config_remote.as_str()) ));
+        let vocab_resource: Resource =  Resource::Remote(RemoteResource::from_pretrained( (modelspec.vocab_local.as_str(), modelspec.vocab_remote.as_str()) ));
+        let merges_resource: Option<Resource> = if let (Some(merges_local), Some(merges_remote)) = (modelspec.merges_local.as_ref(), modelspec.merges_remote.as_ref()) {
+            Some(Resource::Remote(RemoteResource::from_pretrained( (merges_local.as_str(), merges_remote.as_str()) )))
         } else {
             None
         };
         //Load the actual configuration
-        let modelconfig = TokenClassificationConfig::new(modelspec.model_type, (modelspec.model_local.as_str(), modelspec.model_remote.as_str()), (modelspec.config_local.as_str(), modelspec.config_remote.as_str()), (modelspec.vocab_local.as_str(), modelspec.vocab_remote.as_str()), merges);
+        let modelconfig = TokenClassificationConfig::new(modelspec.model_type, model_resource, config_resource, vocab_resource, merges_resource);
 
         //Load the model
         if let Ok(model) = TokenClassificationModel::new(modelconfig) {
