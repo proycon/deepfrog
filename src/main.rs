@@ -178,7 +178,7 @@ fn process_text<'a>(filename: &str, config: &'a Configuration, models: &Vec<Toke
     let lines_ref: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
     let mut output: Vec<ModelOutput> = Vec::new();
     for (model, modelspec) in models.iter().zip(config.models.iter()) {
-        let labeled_tokens = model.predict(&lines_ref, false);
+        let labeled_tokens = model.predict(&lines_ref, modelspec.ignore_first_label);
         output.push( ModelOutput {
             model_name: &modelspec.model_name,
             labeled_tokens: labeled_tokens
