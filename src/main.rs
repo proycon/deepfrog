@@ -15,7 +15,8 @@ extern crate clap;
 use clap::{Arg, App, SubCommand};
 
 extern crate rust_bert;
-use rust_bert::pipelines::token_classification::{TokenClassificationConfig, TokenClassificationOption,ConfigOption,TokenizerOption,ModelType, TokenClassificationModel, Token};
+use rust_bert::pipelines::common::{ModelType,TokenizerOption,ConfigOption};
+use rust_bert::pipelines::token_classification::{TokenClassificationConfig,TokenClassificationModel, Token};
 use rust_bert::resources::{Resource,RemoteResource};
 
 extern crate serde;
