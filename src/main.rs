@@ -16,7 +16,7 @@ use clap::{Arg, App, SubCommand};
 
 extern crate rust_bert;
 use rust_bert::pipelines::common::{ModelType,TokenizerOption,ConfigOption};
-use rust_bert::pipelines::token_classification::{TokenClassificationConfig,TokenClassificationModel, Token};
+use rust_bert::pipelines::token_classification::{TokenClassificationConfig,TokenClassificationModel, Token, LabelAggregationOption};
 use rust_bert::resources::{Resource,RemoteResource};
 
 extern crate serde;
@@ -151,7 +151,7 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
             None
         };
         //Load the actual configuration
-        let modelconfig = TokenClassificationConfig::new(modelspec.model_type, model_resource, config_resource, vocab_resource, merges_resource, modelspec.lowercase);
+        let modelconfig = TokenClassificationConfig::new(modelspec.model_type, model_resource, config_resource, vocab_resource, merges_resource, modelspec.lowercase, LabelAggregationOption::Mode);
 
         //Load the model
         if let Ok(model) = TokenClassificationModel::new(modelconfig) {
@@ -188,7 +188,7 @@ fn process_text<'a>(filename: &str, config: &'a Configuration, models: &Vec<Toke
     let lines_ref: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
     let mut output: Vec<ModelOutput> = Vec::new();
     for (model, modelspec) in models.iter().zip(config.models.iter()) {
-        let labeled_tokens = model.predict(&lines_ref, modelspec.ignore_first_label);
+        let labeled_tokens = model.predict(&lines_ref, true, false);
         output.push( ModelOutput {
             model_name: &modelspec.model_name,
             labeled_tokens: labeled_tokens
