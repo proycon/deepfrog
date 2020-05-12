@@ -1,0 +1,25 @@
+language: nld
+models:
+  - annotation_type: entity
+    folia_set: undefined
+    model_name: bert-ner-cased-sonar1-nld
+    model_type: Bert
+    model_local: "bert-ner-cased-sonar1-nld/model.ot"
+    model_remote: "https://cdn.huggingface.co/proycon/bert-ner-cased-sonar1-nld/model.ot"
+    config_local: "bert-ner-cased-sonar1-nld/config.json"
+    config_remote: "https://cdn.huggingface.co/proycon/bert-ner-cased-sonar1-nld/config.json"
+    vocab_local: "bert-ner-cased-sonar1-nld/vocab.txt"
+    vocab_remote: "https://cdn.huggingface.co/proycon/bert-ner-cased-sonar1-nld/vocab.txt"
+    ignore_first_label: true
+  - annotation_type: pos
+    folia_set: undefined
+    model_name: bert-pos-cased-deepfrog-nld
+    model_type: Bert
+    model_local: "bert-pos-cased-deepfrog-nld/model.ot"
+    model_remote: "https://cdn.huggingface.co/proycon/bert-pos-cased-deepfrog-nld/model.ot"
+    config_local: "bert-pos-cased-deepfrog-nld/config.json"
+    config_remote: "https://cdn.huggingface.co/proycon/bert-pos-cased-deepfrog-nld/config.json"
+    vocab_local: "bert-pos-cased-deepfrog-nld/vocab.txt"
+    vocab_remote: "https://cdn.huggingface.co/proycon/bert-pos-cased-deepfrog-nld/vocab.txt"
+    ignore_first_label: false
+

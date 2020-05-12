@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 rust-bert = { path = "/home/proycon/work/rust-bert" }
+folia = { path = "/home/proycon/work/folia-rust" }
 clap = "2.33.0"
 serde = "1.0.106"
 serde_yaml = "0.8.11"

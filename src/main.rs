@@ -25,6 +25,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+extern crate folia;
+
 
 #[derive(Serialize, Deserialize)]
 struct Configuration {
@@ -91,6 +93,8 @@ struct ModelOutput<'a> {
     labeled_tokens: Vec<Token>,
 }
 
+
+
 fn main() -> Result<(), Box<dyn Error + 'static>> {
     let matches = App::new("DeepFrog")
         .version("0.1")
@@ -109,6 +113,16 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
                 .takes_value(true)
                 .multiple(true)
                 .required(true))
+            .arg(Arg::with_name("json-low")
+                .long("--json-low")
+                .short("-j")
+                .help("Output low-level JSON directly after prediction")
+                .required(false))
+            .arg(Arg::with_name("json")
+                .long("--json")
+                .short("-J")
+                .help("Output higher-level JSON, includes consolidation of layers")
+                .required(false))
         .get_matches();
 
     let configfile = PathBuf::from(matches.value_of("config").expect("No configuration file supplied"));
@@ -165,14 +179,16 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
 
     for (i, filename) in files.iter().enumerate() {
         eprintln!("Processing file {} of {}: {} ...", i+1, files.len(), filename);
-        let result = process_text(&filename, &config, &token_classification_models);
-        for output in result.expect("unwrapping") {
-            println!("{{ \"model\": \"{}\", \"tokens\": [", output.model_name);
-            for token in output.labeled_tokens.iter() {
-                print!("{}", serde_json::to_string(&token).expect("json"));
-                println!(",")
+        let result = process_text(&filename, &config, &token_classification_models, true);
+        let (output, input) = result.expect("unwrapping");
+        if matches.is_present("json-low") {
+            print_json_low(&output, &input);
+        } else {
+            let offsets_to_tokens = consolidate_layers(&output);
+            if matches.is_present("json") {
+                print_json_high(&offsets_to_tokens, &output, &input, &config.models);
             }
-            println!("] }}");
+
         }
     }
 
@@ -180,8 +196,71 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
     Ok(())
 }
 
+///Low-level JSON output, directly as outputted by the underlying model
+fn print_json_low(output: &Vec<ModelOutput>, input: &Vec<String>) {
+    println!("{{");
+    println!("\"input\": {}", serde_json::to_string(&input).expect("json"));
+    println!("\"output_layers\": [");
+    for output_layer in output {
+        println!("  {{ \"model_name\": \"{}\", \"tokens\": [", output_layer.model_name);
+        for token in output_layer.labeled_tokens.iter() {
+            print!("    {}", serde_json::to_string(&token).expect("json"));
+            println!(",")
+        }
+        println!("  ] }},");
+    }
+    println!("]}}");
+}
 
-fn process_text<'a>(filename: &str, config: &'a Configuration, models: &Vec<TokenClassificationModel>) -> Result<Vec<ModelOutput<'a>>, Box<dyn Error + 'static>> {
+///High-level JSON output, output after consolidation of annotation layers
+fn print_json_high(offsets_to_tokens: &Vec<OffsetToTokens>, output: &Vec<ModelOutput>, input: &Vec<String>, models: &Vec<ModelSpecification>) {
+    println!("{{");
+    println!("\"input\": {}", serde_json::to_string(&input).expect("json"));
+    println!("\"output_tokens\": [");
+    for offset in offsets_to_tokens {
+        let sentence_text = input.get(offset.sentence).expect("sentence not found in input");
+        let token_text: &str = get_text_by_char_offset(sentence_text, offset.begin, offset.end).expect("unable to get token text");
+        println!("  {{ \"text\": \"{}\",", token_text);
+        println!("    \"offset\": {{ \"sentence\": {}, \"begin\": {}, \"end\": {} }},", offset.sentence, offset.begin, offset.end);
+        println!("    \"annotations\": [");
+        for (model_index, token_index) in offset.model_token_indices.iter() {
+            let model_name = &models.get(*model_index).expect("getting model").model_name;
+            let token = &output[*model_index].labeled_tokens[*token_index];
+            println!("        {{ \"model_name\": \"{}\", \"label\": \"{}\", \"confidence\": {} }},",  model_name, token.label, token.score);
+        }
+        println!("    ]");
+        println!("  }},");
+    }
+    println!("}}");
+}
+
+fn get_text_by_char_offset(s: &str, begin: u32, end: u32) -> Option<&str> {
+    let mut bytebegin = 0;
+    let mut byteend = 0;
+    let mut charcount = 0;
+    for (i, (byte, _)) in s.char_indices().enumerate() {
+        charcount += 1;
+        if i == begin as usize {
+            bytebegin = byte;
+        }
+        if i == end as usize {
+            byteend = byte;
+            break;
+        }
+    }
+    if byteend == 0 && end == charcount {
+        byteend = s.len();
+    }
+    if bytebegin != byteend {
+        Some(&s[bytebegin..byteend])
+    } else {
+        None
+    }
+}
+
+
+
+fn process_text<'a>(filename: &str, config: &'a Configuration, models: &Vec<TokenClassificationModel>, return_input: bool) -> Result<(Vec<ModelOutput<'a>>, Vec<String>), Box<dyn Error + 'static>> {
     let f = File::open(filename)?;
     let f_buffer = BufReader::new(f);
     let lines: Vec<String> = f_buffer.lines().map(|s| s.unwrap()).collect();
@@ -194,6 +273,89 @@ fn process_text<'a>(filename: &str, config: &'a Configuration, models: &Vec<Toke
             labeled_tokens: labeled_tokens
         });
     }
-    Ok(output)
+    let input: Vec<String> = if return_input {
+        lines_ref.into_iter().map(|s| s.to_owned()).collect()
+    } else {
+        vec!()
+    };
+    Ok((output, input))
 }
 
+
+struct OffsetToTokens {
+    sentence: usize,
+    begin: u32,
+    end: u32,
+    model_token_indices: Vec<(usize,usize)>, //model_index + token_index
+}
+
+
+///Consolidate annotations in multiple layers, creating a reverse index
+///from offsets to models and labelled tokens
+fn consolidate_layers(output: &Vec<ModelOutput>) -> Vec<OffsetToTokens> {
+    //create a vector of offsets
+    if output.is_empty() {
+        return vec!();
+    }
+    let mut offsets_to_tokens: Vec<OffsetToTokens> = Vec::with_capacity(output[0].labeled_tokens.len());
+    for (i, output_layer) in output.iter().enumerate() {
+        if i == 0 {
+            //first tokenisation is the pivot for all
+            for (j, token) in output_layer.labeled_tokens.iter().enumerate() {
+                if let Some(offset) = token.offset {
+                    offsets_to_tokens.push(OffsetToTokens {
+                        sentence: token.sentence,
+                        begin: offset.begin,
+                        end: offset.end,
+                        model_token_indices: vec!( (i,j) )
+                    });
+                }
+            }
+        } else {
+            //consolidate with previous offsets
+            for (j,token) in output_layer.labeled_tokens.iter().enumerate() {
+                let mut consolidated = false;
+                let mut begin: Option<usize> = None;
+                let mut end: Option<usize> = None;
+                if token.offset.is_some() {
+                    for (k, offset) in offsets_to_tokens.iter_mut().enumerate() {
+                        if token.sentence == offset.sentence {
+                            if token.offset.unwrap().begin >= offset.begin && token.offset.unwrap().end <= offset.end {
+                                offset.model_token_indices.push((i,j));
+                                consolidated = true;
+                                break;
+                            } else if begin.is_none() && token.offset.unwrap().begin >= offset.begin && token.offset.unwrap().begin <= offset.end {
+                                begin = Some(k);
+                            } else if token.offset.unwrap().end >= offset.begin && token.offset.unwrap().end <= offset.end {
+                                end = Some(k);
+                            } else if offset.end > token.offset.unwrap().end  {
+                                break;
+                            }
+                        }
+                    }
+                }
+                if !consolidated {
+                    //no exact or sub-match, let's try super-matches (this token matching multiple tokens)
+                    if begin.is_some() && end.is_some() {
+                        let begin = begin.unwrap();
+                        let end = end.unwrap();
+                        for k in begin..end {
+                            if let Some(offset) = offsets_to_tokens.get_mut(k) {
+                                offset.model_token_indices.push((i,j));
+                            }
+                        }
+                    } else {
+                        eprintln!("Token can not be consolidated with initial tokenisation {:?}:", token);
+                    }
+                }
+            }
+        }
+    }
+    offsets_to_tokens
+}
+
+///Consolidate the output of multiple models into one structure
+fn to_folia(mut doc: folia::Document, output: Vec<ModelOutput>) -> folia::Document {
+    //create sentences
+    doc
+}

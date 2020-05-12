@@ -2,7 +2,7 @@ language: nld
 models:
   - annotation_type: entity
     folia_set: undefined
-    model_name: robbert-ner-cosed-sonar1-nld
+    model_name: robbert-ner-cased-sonar1-nld
     model_type: Roberta
     model_local: "robbert-ner-cased-sonar1-nld/model.ot"
     model_remote: "https://cdn.huggingface.co/proycon/robbert-ner-cased-sonar1-nld/model.ot"
