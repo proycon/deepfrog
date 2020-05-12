@@ -8,7 +8,7 @@ use std::fs;
 use std::fs::File;
 use std::io::{Write,Read,BufReader,BufRead};
 use std::error::Error;
-use std::str::FromStr;
+use std::str;
 use std::collections::{HashMap,HashSet};
 
 extern crate clap;
@@ -38,7 +38,7 @@ struct Configuration {
 struct ModelSpecification {
 
     ///FoLiA Annotation type
-    annotation_type: String,
+    annotation_type: folia::AnnotationType,
 
     ///FoLiA Set Definition
     folia_set: String,
@@ -86,6 +86,7 @@ struct ModelSpecification {
     #[serde(default)]
     lowercase: bool,
 
+
 }
 
 struct ModelOutput<'a> {
@@ -123,7 +124,17 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
                 .short("-J")
                 .help("Output higher-level JSON, includes consolidation of layers")
                 .required(false))
+            .arg(Arg::with_name("xml")
+                .long("--xml")
+                .short("-x")
+                .help("Output FoLiA XML")
+                .required(false))
         .get_matches();
+
+    if !matches.is_present("json-low") && !matches.is_present("json") && !matches.is_present("xml") {
+        eprintln!("ERROR: Please specify an output option: --xml, --json-low, json");
+        std::process::exit(2);
+    }
 
     let configfile = PathBuf::from(matches.value_of("config").expect("No configuration file supplied"));
 
@@ -187,8 +198,17 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
             let offsets_to_tokens = consolidate_layers(&output);
             if matches.is_present("json") {
                 print_json_high(&offsets_to_tokens, &output, &input, &config.models);
+            } else {
+                let filename = PathBuf::from(filename);
+                let id = if let Some(filestem) = filename.file_stem() {
+                    filestem.to_str().expect("to str")
+                } else {
+                    "undefined"
+                };
+                let mut doc = folia::Document::new(id, folia::DocumentProperties::default() )?;
+                doc = to_folia(doc, &offsets_to_tokens, &output, &input, &config.models);
+                println!("{}",str::from_utf8(&doc.xml(0).expect("serialising to XML")).expect("parsing utf-8"));
             }
-
         }
     }
 
@@ -355,7 +375,67 @@ fn consolidate_layers(output: &Vec<ModelOutput>) -> Vec<OffsetToTokens> {
 }
 
 ///Consolidate the output of multiple models into one structure
-fn to_folia(mut doc: folia::Document, output: Vec<ModelOutput>) -> folia::Document {
+fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, output: &Vec<ModelOutput>, input: &Vec<String>, models: &Vec<ModelSpecification>) -> folia::Document {
     //create sentences
+    let root: folia::ElementKey = 0; //root element always has key 0
+    let mut sentence_nr = 0;
+    let mut word_nr = 0;
+    let mut sentence_index = 9999;
+    let mut sentence_key: folia::ElementKey = 0;
+
+
+    //add the tokens
+    for offset in offsets_to_tokens.into_iter() {
+        if sentence_index != offset.sentence {
+            //new sentence
+            sentence_nr += 1;
+            word_nr = 0; //reset
+            sentence_key = doc.add_element_to(root,
+                            folia::ElementData::new(folia::ElementType::Sentence).
+                            with_attrib(folia::Attribute::Id(format!("{}.s.{}", doc.id(), sentence_nr).to_string())) ).expect("Adding sentence");
+            sentence_index = offset.sentence;
+        }
+
+        assert_ne!(sentence_key,0);
+
+        let sentence_text = input.get(offset.sentence).expect("sentence not found in input");
+        let token_text: &str = get_text_by_char_offset(sentence_text, offset.begin, offset.end).expect("unable to get token text");
+
+        //add words/tokens
+        word_nr += 1;
+        let word_key = doc.add_element_to(sentence_key,
+                            folia::ElementData::new(folia::ElementType::Word)
+                            .with_attrib(folia::Attribute::Id(format!("{}.s.{}.w.{}", doc.id(), sentence_nr, word_nr).to_string()))
+
+                            ).expect("Adding word");
+
+        doc.add_element_to(word_key,
+                            folia::ElementData::new(folia::ElementType::TextContent)
+                            .with(folia::DataType::Text(token_text.to_owned()))
+                            ).expect("Adding word");
+
+        for (model_index, token_index) in offset.model_token_indices.iter() {
+            let token = &output[*model_index].labeled_tokens[*token_index];
+
+            let modelspec = &models.get(*model_index).expect("getting model");
+
+            let element_type = modelspec.annotation_type.elementtype();
+
+            if folia::ElementGroup::Inline.contains(element_type) {
+                doc.add_element_to(word_key,
+                                    folia::ElementData::new(element_type)
+                                        .with_attrib(folia::Attribute::Set(modelspec.folia_set.to_owned())) //can be more efficient by using keys
+                                        .with_attrib(folia::Attribute::Class(token.label.clone()))
+                                    ).expect("Adding inline annotation");
+
+            } else if folia::ElementGroup::Span.contains(element_type) {
+                //TODO
+            } else {
+                eprintln!("WARNIGN: Can't handle element type {} yet", element_type);
+            }
+
+        }
+    }
+
     doc
 }

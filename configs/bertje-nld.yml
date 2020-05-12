@@ -1,6 +1,6 @@
 language: nld
 models:
-  - annotation_type: entity
+  - annotation_type: ENTITY
     folia_set: undefined
     model_name: bert-ner-cased-sonar1-nld
     model_type: Bert
@@ -11,7 +11,7 @@ models:
     vocab_local: "bert-ner-cased-sonar1-nld/vocab.txt"
     vocab_remote: "https://cdn.huggingface.co/proycon/bert-ner-cased-sonar1-nld/vocab.txt"
     ignore_first_label: true
-  - annotation_type: pos
+  - annotation_type: POS
     folia_set: undefined
     model_name: bert-pos-cased-deepfrog-nld
     model_type: Bert

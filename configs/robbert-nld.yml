@@ -1,6 +1,6 @@
 language: nld
 models:
-  - annotation_type: entity
+  - annotation_type: ENTITY
     folia_set: undefined
     model_name: robbert-ner-cased-sonar1-nld
     model_type: Roberta
@@ -13,7 +13,7 @@ models:
     merges_local: "robbert-ner-cased-sonar1-nld/merges.txt"
     merges_remote: "https://cdn.huggingface.co/proycon/robbert-ner-cased-sonar1-nld/merges.txt"
     ignore_first_label: true
-  - annotation_type: pos
+  - annotation_type: POS
     folia_set: undefined
     model_name: robbert-pos-cased-deepfrog-nld
     model_type: Roberta
