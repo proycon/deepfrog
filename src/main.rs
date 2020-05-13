@@ -383,6 +383,8 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
     let mut sentence_index = 9999;
     let mut sentence_key: folia::ElementKey = 0;
 
+    doc.declare(folia::AnnotationType::SENTENCE, &None, &None, &None);
+    doc.declare(folia::AnnotationType::TOKEN, &None, &None, &None);
 
     //add the tokens
     for offset in offsets_to_tokens.into_iter() {
