@@ -30,6 +30,8 @@ We aim to make available various models for Dutch NLP.
 
 #### RobBERT Part-of-Speech (CGN tagset) for Dutch
 
+Model page with instructions: https://huggingface.co/proycon/robbert-pos-cased-deepfrog-nld
+
 Uses pre-trained model [RobBERT](https://people.cs.kuleuven.be/~pieter.delobelle/robbert/) (a Roberta model), fine-tuned on
 part-of-speech tags with the full corpus as also used by Frog. Uses the tag set of Corpus Gesproken Nederlands (CGN), this
 corpus constitutes a subset of the training data.
@@ -47,6 +49,8 @@ recall = 0.9708171206225681
 
 #### BERT Part-of-Speech (CGN tagset) for Dutch
 
+Model page with instructions: https://huggingface.co/proycon/bert-pos-cased-deepfrog-nld
+
 Uses pre-trained model [BERTje](https://github.com/wietsedv/bertje) (a BERT model), fine-tuned on
 part-of-speech tags with the full corpus as also used by Frog. Uses the tag set of Corpus Gesproken Nederlands (CGN), this
 corpus constitutes a subset of the training data.
@@ -61,6 +65,8 @@ recall = 0.9737354085603113
 ```
 
 #### RobBERT SoNaR1 Named Entities for Dutch
+
+Model page with instructions: https://huggingface.co/proycon/robbert-ner-cased-sonar1-nld
 
 Uses pre-trained model [RobBERT](https://people.cs.kuleuven.be/~pieter.delobelle/robbert/) (a Roberta model), fine-tuned on
 Named Entities from the SoNaR1 corpus (as also used by Frog). Provides basic PER,LOC,ORG,PRO,EVE,MISC tags.
@@ -78,6 +84,8 @@ recall = 0.9038461538461539
 **Note:** the tokenisation in this model is English rather than Dutch
 
 #### BERT SoNaR1 Named Entities for Dutch
+
+Model page with instructions: https://huggingface.co/proycon/bert-ner-cased-sonar1-nld
 
 Uses pre-trained model [BERTje](https://github.com/wietsedv/bertje) (a BERT model), fine-tuned on
 Named Entities from the SoNaR1 corpus (as also used by Frog). Provides basic PER,LOC,ORG,PRO,EVE,MISC tags.
