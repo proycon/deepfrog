@@ -18,7 +18,7 @@ tokenizer = modelname
 #model = AutoModel.from_pretrained(modelname)
 
 #Or use pipelines:
-nlp = pipeline('ner', model=modelname, tokenizer=modelname) #you can add ignore_labels=[] or in later versions: group=True
+nlp = pipeline('ner', model=modelname, tokenizer=tokenizer) #you can add ignore_labels=[] or in later versions: group=True
 result = nlp("Ik geef hem een cadeau.")
 print(result)
 result = nlp("Amsterdam is de hoofdstad van Nederland, maar de regering zetelt in Den Haag.")

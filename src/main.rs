@@ -433,7 +433,7 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
             } else if folia::ElementGroup::Span.contains(element_type) {
                 //TODO
             } else {
-                eprintln!("WARNIGN: Can't handle element type {} yet", element_type);
+                eprintln!("WARNING: Can't handle element type {} yet", element_type);
             }
 
         }
