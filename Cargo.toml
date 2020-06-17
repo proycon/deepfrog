@@ -7,8 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rust-bert = { path = "/home/proycon/work/rust-bert" }
-folia = { path = "/home/proycon/work/folia-rust" }
+rust-bert = { version = "0.7.7", path = "/home/proycon/work/rust-bert" }
+folia = { version = "0.0.3", path = "/home/proycon/work/folia-rust" }
 clap = "2.33.0"
 serde = "1.0.106"
 serde_yaml = "0.8.11"
