@@ -207,7 +207,7 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
                 };
                 let mut doc = folia::Document::new(id, folia::DocumentProperties::default() )?;
                 doc = to_folia(doc, &offsets_to_tokens, &output, &input, &config.models);
-                println!("{}",str::from_utf8(&doc.xml(0).expect("serialising to XML")).expect("parsing utf-8"));
+                println!("{}",str::from_utf8(&doc.xml(0,4).expect("serialising to XML")).expect("parsing utf-8"));
             }
         }
     }
