@@ -466,7 +466,7 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
                     (token.label.clone(), false)
                 };
                 if let Some(spanbuffer) = spanbuffer_permodel.get_mut(model_index) {
-                    if forcenew || spanbuffer.class != class || spanbuffer.sentence != sentence_nr || spanbuffer.begin + spanbuffer.ids.len() + 1  != word_nr {
+                    if forcenew || spanbuffer.class != class || spanbuffer.sentence != sentence_nr || spanbuffer.begin + spanbuffer.ids.len()  != word_nr {
                         //flush the existing buffer
                         spanbuffer.to_folia(&mut doc, element_type, modelspec.folia_set.to_owned());
                         //and start a new one
