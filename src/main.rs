@@ -26,6 +26,7 @@ extern crate serde_json;
 extern crate serde_derive;
 
 extern crate folia;
+use folia::ReadElement;
 
 
 #[derive(Serialize, Deserialize)]
@@ -78,14 +79,22 @@ struct ModelSpecification {
     #[serde(default)]
     merges_remote: Option<String>,
 
-    ///Ignore the first label, you can set it to true for NER tasks where the first label covers something like 'Outside', i.e. a non-entity
+    ///Ignored label, you can set it to something like "O" or "Outside" for NER tasks, depending
+    ///on how your tagset denotes non-entities.
     #[serde(default)]
-    ignore_first_label: bool,
+    ignore_label: String,
 
     ///Indicates if this is a lower-cased model, in which case all input will be automatically lower-cased
     #[serde(default)]
     lowercase: bool,
 
+    ///Does this model adhere to the BIO-scheme?
+    #[serde(default)]
+    bio: bool,
+
+    ///Delimiter used in the BIO-scheme (example: in a tag like B-per the delimiter is a hyphen)
+    #[serde(default)]
+    bio_delimiter: String,
 
 }
 
@@ -94,6 +103,13 @@ struct ModelOutput<'a> {
     labeled_tokens: Vec<Token>,
 }
 
+struct SpanBuffer {
+    begin: usize, //begin token nr
+    sentence: usize, //sentence nr
+    class: String,
+    ids: Vec<String>,
+    confidence: f64,
+}
 
 
 fn main() -> Result<(), Box<dyn Error + 'static>> {
@@ -374,6 +390,7 @@ fn consolidate_layers(output: &Vec<ModelOutput>) -> Vec<OffsetToTokens> {
     offsets_to_tokens
 }
 
+
 ///Consolidate the output of multiple models into one structure
 fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, output: &Vec<ModelOutput>, input: &Vec<String>, models: &Vec<ModelSpecification>) -> folia::Document {
     //create sentences
@@ -386,15 +403,19 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
     doc.declare(folia::AnnotationType::SENTENCE, &None, &None, &None);
     doc.declare(folia::AnnotationType::TOKEN, &None, &None, &None);
 
+    let mut spanbuffer_permodel: HashMap<usize,SpanBuffer> = HashMap::new();
+
     //add the tokens
     for offset in offsets_to_tokens.into_iter() {
         if sentence_index != offset.sentence {
             //new sentence
             sentence_nr += 1;
             word_nr = 0; //reset
-            sentence_key = doc.add_element_to(root,
+            sentence_key = doc.annotate(root,
                             folia::ElementData::new(folia::ElementType::Sentence).
-                            with_attrib(folia::Attribute::Id(format!("{}.s.{}", doc.id(), sentence_nr).to_string())) ).expect("Adding sentence");
+                            with_attrib(folia::Attribute::Id(format!("{}.s.{}", doc.id(), sentence_nr).to_string()))
+                            ).expect("Adding sentence");
+
             sentence_index = offset.sentence;
         }
 
@@ -405,16 +426,16 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
 
         //add words/tokens
         word_nr += 1;
-        let word_key = doc.add_element_to(sentence_key,
+        let word_key = doc.annotate(sentence_key,
                             folia::ElementData::new(folia::ElementType::Word)
                             .with_attrib(folia::Attribute::Id(format!("{}.s.{}.w.{}", doc.id(), sentence_nr, word_nr).to_string()))
 
                             ).expect("Adding word");
 
-        doc.add_element_to(word_key,
-                            folia::ElementData::new(folia::ElementType::TextContent)
-                            .with(folia::DataType::Text(token_text.to_owned()))
-                            ).expect("Adding word");
+        doc.annotate(word_key,
+                     folia::ElementData::new(folia::ElementType::TextContent)
+                     .with(folia::DataType::Text(token_text.to_owned()))
+                     ).expect("Adding word");
 
         for (model_index, token_index) in offset.model_token_indices.iter() {
             let token = &output[*model_index].labeled_tokens[*token_index];
@@ -424,14 +445,54 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
             let element_type = modelspec.annotation_type.elementtype();
 
             if folia::ElementGroup::Inline.contains(element_type) {
-                doc.add_element_to(word_key,
-                                    folia::ElementData::new(element_type)
-                                        .with_attrib(folia::Attribute::Set(modelspec.folia_set.to_owned())) //can be more efficient by using keys
-                                        .with_attrib(folia::Attribute::Class(token.label.clone()))
-                                    ).expect("Adding inline annotation");
+                doc.annotate(word_key,
+                             folia::ElementData::new(element_type)
+                             .with_attrib(folia::Attribute::Set(modelspec.folia_set.to_owned())) //can be more efficient by using keys
+                             .with_attrib(folia::Attribute::Class(token.label.clone()))
+                            ).expect("Adding inline annotation");
 
             } else if folia::ElementGroup::Span.contains(element_type) {
-                //TODO
+                let (class, forcenew) = if modelspec.bio {
+                    if token.label.starts_with(format!("B{}", modelspec.bio_delimiter).as_str()) {
+                        (token.label[1 + modelspec.bio_delimiter.len()..].to_owned(), true)
+                    } else if token.label.starts_with(format!("I{}", modelspec.bio_delimiter).as_str()) {
+                        (token.label[1 + modelspec.bio_delimiter.len()..].to_owned(), false)
+                    } else if token.label == modelspec.ignore_label {
+                        continue;
+                    } else {
+                        (token.label.clone(), false)
+                    }
+                } else {
+                    (token.label.clone(), false)
+                };
+                if let Some(spanbuffer) = spanbuffer_permodel.get_mut(model_index) {
+                    if forcenew || spanbuffer.class != class || spanbuffer.sentence != sentence_nr || spanbuffer.begin + spanbuffer.ids.len() + 1  != word_nr {
+                        //flush the existing buffer
+                        spanbuffer.to_folia(&mut doc, element_type, modelspec.folia_set.to_owned());
+                        //and start a new one
+                        *spanbuffer = SpanBuffer {
+                            begin: word_nr,
+                            sentence: sentence_nr,
+                            class: class,
+                            ids: vec!(doc.get_element(word_key).expect("element").id().expect("id").to_string()),
+                            confidence: token.score,
+                        }
+                    } else {
+                        //increase the coverage of the existing buffer to include the current word
+                        spanbuffer.ids.push(doc.get_element(word_key).expect("element").id().expect("id").to_string());
+                        spanbuffer.confidence *= token.score;
+                    }
+                } else {
+                    spanbuffer_permodel.insert(*model_index,
+                        SpanBuffer {
+                            begin: word_nr,
+                            sentence: sentence_nr,
+                            class: class,
+                            ids: vec!(doc.get_element(word_key).expect("element").id().expect("id").to_string()),
+                            confidence: token.score,
+                        }
+                    );
+                }
             } else {
                 eprintln!("WARNING: Can't handle element type {} yet", element_type);
             }
@@ -439,5 +500,23 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
         }
     }
 
+    //flush remaining span buffers
+    for (model_index, spanbuffer) in spanbuffer_permodel.iter() {
+        let modelspec = &models.get(*model_index).expect("getting model");
+        let element_type = modelspec.annotation_type.elementtype();
+        spanbuffer.to_folia(&mut doc, element_type, modelspec.folia_set.to_owned());
+    }
+
     doc
+}
+
+impl SpanBuffer {
+    fn to_folia(&self, doc: &mut folia::Document, element_type: folia::ElementType, set: String) {
+        doc.annotate_span(
+                     folia::ElementData::new(element_type)
+                     .with_attrib(folia::Attribute::Set(set))
+                     .with_attrib(folia::Attribute::Class(self.class.clone()))
+                     .with_span(&self.ids.iter().map(|s| s.as_str()).collect::<Vec<&str>>())
+                    ).expect("Adding span annotation");
+    }
 }

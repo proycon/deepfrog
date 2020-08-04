@@ -10,7 +10,9 @@ models:
     config_remote: "https://cdn.huggingface.co/proycon/bert-ner-cased-sonar1-nld/config.json"
     vocab_local: "bert-ner-cased-sonar1-nld/vocab.txt"
     vocab_remote: "https://cdn.huggingface.co/proycon/bert-ner-cased-sonar1-nld/vocab.txt"
-    ignore_first_label: true
+    bio: true
+    bio_delimiter: "-"
+    ignore_label: "O"
   - annotation_type: POS
     folia_set: undefined
     model_name: bert-pos-cased-deepfrog-nld
@@ -21,5 +23,4 @@ models:
     config_remote: "https://cdn.huggingface.co/proycon/bert-pos-cased-deepfrog-nld/config.json"
     vocab_local: "bert-pos-cased-deepfrog-nld/vocab.txt"
     vocab_remote: "https://cdn.huggingface.co/proycon/bert-pos-cased-deepfrog-nld/vocab.txt"
-    ignore_first_label: false
 
