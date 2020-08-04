@@ -403,11 +403,15 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
     doc.declare(folia::AnnotationType::SENTENCE, &None, &None, &None);
     doc.declare(folia::AnnotationType::TOKEN, &None, &None, &None);
 
-    let mut spanbuffer_permodel: HashMap<usize,SpanBuffer> = HashMap::new();
+    let mut spanbuffers_permodel: HashMap<usize,Vec<SpanBuffer>> = HashMap::new();
 
     //add the tokens
     for offset in offsets_to_tokens.into_iter() {
         if sentence_index != offset.sentence {
+            if !spanbuffers_permodel.is_empty() {
+                flush_spanbuffers_to_folia(&mut doc, &spanbuffers_permodel, models);
+                spanbuffers_permodel.clear();
+            }
             //new sentence
             sentence_nr += 1;
             word_nr = 0; //reset
@@ -465,33 +469,32 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
                 } else {
                     (token.label.clone(), false)
                 };
-                if let Some(spanbuffer) = spanbuffer_permodel.get_mut(model_index) {
-                    if forcenew || spanbuffer.class != class || spanbuffer.sentence != sentence_nr || spanbuffer.begin + spanbuffer.ids.len()  != word_nr {
-                        //flush the existing buffer
-                        spanbuffer.to_folia(&mut doc, element_type, modelspec.folia_set.to_owned());
-                        //and start a new one
-                        *spanbuffer = SpanBuffer {
-                            begin: word_nr,
-                            sentence: sentence_nr,
-                            class: class,
-                            ids: vec!(doc.get_element(word_key).expect("element").id().expect("id").to_string()),
-                            confidence: token.score,
+                if let None = spanbuffers_permodel.get(model_index) {
+                    //make sure we have a spanbuffer entry for this model
+                    spanbuffers_permodel.insert(*model_index, Vec::new());
+                }
+                if let Some(spanbuffers) = spanbuffers_permodel.get_mut(model_index) {
+                    let l = spanbuffers.len();
+                    let mut addnew = true;
+                    if l > 0 {
+                        if let Some(spanbuffer) = spanbuffers.get_mut(l -1) {
+                            if !forcenew && spanbuffer.class == class && spanbuffer.sentence == sentence_nr && spanbuffer.begin + spanbuffer.ids.len()  == word_nr {
+                                //increase the coverage of the existing buffer to include the current word
+                                spanbuffer.ids.push(doc.get_element(word_key).expect("element").id().expect("id").to_string());
+                                spanbuffer.confidence *= token.score;
+                                addnew = false;
+                            }
                         }
-                    } else {
-                        //increase the coverage of the existing buffer to include the current word
-                        spanbuffer.ids.push(doc.get_element(word_key).expect("element").id().expect("id").to_string());
-                        spanbuffer.confidence *= token.score;
                     }
-                } else {
-                    spanbuffer_permodel.insert(*model_index,
-                        SpanBuffer {
+                    if addnew {
+                        spanbuffers.push(SpanBuffer {
                             begin: word_nr,
                             sentence: sentence_nr,
                             class: class,
                             ids: vec!(doc.get_element(word_key).expect("element").id().expect("id").to_string()),
                             confidence: token.score,
-                        }
-                    );
+                        });
+                    }
                 }
             } else {
                 eprintln!("WARNING: Can't handle element type {} yet", element_type);
@@ -500,14 +503,20 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
         }
     }
 
-    //flush remaining span buffers
-    for (model_index, spanbuffer) in spanbuffer_permodel.iter() {
-        let modelspec = &models.get(*model_index).expect("getting model");
-        let element_type = modelspec.annotation_type.elementtype();
-        spanbuffer.to_folia(&mut doc, element_type, modelspec.folia_set.to_owned());
-    }
+    //flush all span buffers
+    flush_spanbuffers_to_folia(&mut doc, &spanbuffers_permodel, models);
 
     doc
+}
+
+fn flush_spanbuffers_to_folia(doc: &mut folia::Document, spanbuffers_permodel: &HashMap<usize,Vec<SpanBuffer>>, models: &Vec<ModelSpecification>) {
+    for (model_index, spanbuffers) in spanbuffers_permodel.iter() {
+         for spanbuffer in spanbuffers {
+            let modelspec = &models.get(*model_index).expect("getting model");
+            let element_type = modelspec.annotation_type.elementtype();
+            spanbuffer.to_folia(doc, element_type, modelspec.folia_set.to_owned());
+        }
+    }
 }
 
 impl SpanBuffer {
