@@ -221,7 +221,8 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
                 } else {
                     "undefined"
                 };
-                let mut doc = folia::Document::new(id, folia::DocumentProperties::default() )?;
+                let processor = folia::Processor::new(format!("deepfrog")).with_version(format!("0.1.0")).autofill();
+                let mut doc = folia::Document::new(id, folia::DocumentProperties::default().with_processor(processor) )?;
                 doc = to_folia(doc, &offsets_to_tokens, &output, &input, &config.models);
                 println!("{}",str::from_utf8(&doc.xml(0,4).expect("serialising to XML")).expect("parsing utf-8"));
             }
@@ -477,6 +478,7 @@ fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, o
                     let l = spanbuffers.len();
                     let mut addnew = true;
                     if l > 0 {
+                        //get the last item from the buffer, see if the current token is part of it
                         if let Some(spanbuffer) = spanbuffers.get_mut(l -1) {
                             if !forcenew && spanbuffer.class == class && spanbuffer.sentence == sentence_nr && spanbuffer.begin + spanbuffer.ids.len()  == word_nr {
                                 //increase the coverage of the existing buffer to include the current word
