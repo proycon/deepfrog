@@ -180,6 +180,7 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
 
     let mut token_classification_models: Vec<TokenClassificationModel> = Vec::new();
 
+    let mut subprocessors: Vec<folia::Processor> = Vec::new();
     for (i, modelspec) in config.models.iter().enumerate() {
         eprintln!("    Loading model {} of {}: {}:{}  ...", i+1, config.models.len(), modelspec.annotation_type, modelspec.model_name);
 
@@ -193,6 +194,37 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
         };
         //Load the actual configuration
         let modelconfig = TokenClassificationConfig::new(modelspec.model_type, model_resource, config_resource, vocab_resource, merges_resource, modelspec.lowercase, LabelAggregationOption::Mode);
+
+        subprocessors.push(folia::Processor::new(format!("model-{}", modelspec.model_name))
+                            .with_type(folia::ProcessorType::DataSource)
+                            .with_src(if !modelspec.model_remote.is_empty() {
+                                modelspec.model_remote.clone()
+                            } else {
+                                modelspec.model_local.clone()
+                            }
+                            )
+                            .with_format(format!("application/libtorch"))
+        );
+        subprocessors.push(folia::Processor::new(format!("modelconfig-{}", modelspec.model_name))
+                            .with_type(folia::ProcessorType::DataSource)
+                            .with_src(if !modelspec.config_remote.is_empty() {
+                                modelspec.config_remote.clone()
+                            } else {
+                                modelspec.config_local.clone()
+                            }
+                            )
+                            .with_format(format!("application/json"))
+        );
+        subprocessors.push(folia::Processor::new(format!("modelvocab-{}", modelspec.model_name))
+                            .with_type(folia::ProcessorType::DataSource)
+                            .with_src(if !modelspec.vocab_remote.is_empty() {
+                                modelspec.vocab_remote.clone()
+                            } else {
+                                modelspec.vocab_local.clone()
+                            }
+                            )
+        );
+
 
         //Load the model
         if let Ok(model) = TokenClassificationModel::new(modelconfig) {
@@ -221,7 +253,7 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
                 } else {
                     "undefined"
                 };
-                let processor = folia::Processor::new(format!("deepfrog")).with_version(format!("0.1.0")).autofill();
+                let processor = folia_processor(&subprocessors);
                 let mut doc = folia::Document::new(id, folia::DocumentProperties::default().with_processor(processor) )?;
                 doc = to_folia(doc, &offsets_to_tokens, &output, &input, &config.models);
                 println!("{}",str::from_utf8(&doc.xml(0,4).expect("serialising to XML")).expect("parsing utf-8"));
@@ -391,6 +423,18 @@ fn consolidate_layers(output: &Vec<ModelOutput>) -> Vec<OffsetToTokens> {
     offsets_to_tokens
 }
 
+///Instantiate processors for provenance keeping
+fn folia_processor(subprocessors: &Vec<folia::Processor>) -> folia::Processor {
+    let mut processor = folia::Processor::new(format!("deepfrog"))
+                                 .with_version(format!("{}",env!("CARGO_PKG_VERSION")))
+                                 .with_src(format!("https://proycon.github.com/deepfrog"))
+                                 .with_format(format!("text/html"))
+                                 .autofill();
+    for subprocessor in subprocessors.iter() {
+        processor = processor.with_new_subprocessor(subprocessor.clone());
+    }
+    processor
+}
 
 ///Consolidate the output of multiple models into one structure
 fn to_folia(mut doc: folia::Document, offsets_to_tokens: &Vec<OffsetToTokens>, output: &Vec<ModelOutput>, input: &Vec<String>, models: &Vec<ModelSpecification>) -> folia::Document {
