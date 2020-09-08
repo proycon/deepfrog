@@ -1,0 +1,5 @@
+/target
+/trainers/work
+/trainers/.nextflow*
+/trainers/inputdata/mblem.lex
+/trainers/trace*
