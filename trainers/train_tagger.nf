@@ -15,7 +15,7 @@ def basedir = new File(".").getCanonicalPath()
 params.virtualenv =  env.containsKey('VIRTUAL_ENV') ? env['VIRTUAL_ENV'] : ""
 
 params.workers = Runtime.runtime.availableProcessors()
-params.per_gpu_train_batch_size = 32
+params.per_device_train_batch_size = 32
 params.num_train_epochs = 3
 params.save_steps = 20000
 params.max_seq_length = 128
@@ -46,7 +46,7 @@ if (!params.containsKey('name') || !params.containsKey('traindata') || !params.c
     log.info "  --outputdir [path] - Output directory"
     log.info ""
     log.info "Optional parameters inherited from Transformers' run_ner.py (see there for a description):"
-    log.info "  --num_train_epochs, --per_gpu_train_batch_size, --save_steps, --seed, --max_seq_length, --model_type, --cache_dir"
+    log.info "  --num_train_epochs, --per_device_train_batch_size, --save_steps, --seed, --max_seq_length, --model_type, --cache_dir"
     log.info ""
     log.info "File format:"
     log.info "  Two column text format - Space separated; one token per line, two columns (token,tag). Empty lines delimit sentences."
@@ -100,7 +100,7 @@ process run_ner {
     val model from params.model
     val model_type from params.model_type
     val epochs from params.num_train_epochs
-    val batch_size from params.per_gpu_train_batch_size
+    val batch_size from params.per_device_train_batch_size
     val seed from params.seed
     val save_steps from params.save_steps
     val cache_dir from params.cache_dir
@@ -130,7 +130,7 @@ process run_ner {
         extra=""
     fi
 
-    python3 $run_ner_script \$extra --data_dir ./ --output_dir ./ --overwrite_output_dir --labels $labels --model_name_or_path $model --num_train_epochs $epochs --seed $seed --per_gpu_train_batch_size $batch_size --save_steps $save_steps --do_train --do_eval --do_predict
+    python3 $run_ner_script \$extra --data_dir ./ --output_dir ./ --overwrite_output_dir --labels $labels --model_name_or_path $model --num_train_epochs $epochs --seed $seed --per_device_train_batch_size $batch_size --save_steps $save_steps --do_train --do_eval --do_predict
     exit \$?
     """
 }
