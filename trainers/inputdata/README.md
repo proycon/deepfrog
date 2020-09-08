@@ -16,7 +16,7 @@ Note: Data set splits are our own!
 Size (wc output):
 
 ```
-   1767    3334   13994 sonar1-dev-nld.dev.txt
+   1767    3334   13994 sonar1-ner-nld.dev.txt
    1667    3134   13135 sonar1-ner-nld.test.txt
 1018506 1918734 8028977 sonar1-ner-nld.train.txt
 ```
@@ -48,3 +48,9 @@ Checksums (md5sum):
 bead336dd429484ff7318bd9c87df0cc  frog1.1-pos-nld.test.txt
 ff61b7e64c6c1935efd8fbb02d528729  frog1.1-pos-nld.train.txt
 ```
+
+## Lemmatisation
+
+Based on the CGN corpus and mblem.lex , a corrected version of E-Lex.
+
+Note: Data set splits are our own!
