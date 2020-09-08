@@ -110,7 +110,7 @@ process run_ner {
     file "pytorch_model.bin" into pytorch_model
     file "config.json" into configfile
     file "special_tokens_map.json" optional true into specialtokensmap //roberta only
-    file "merges.txt" optional true into specialtokensmap //roberta only
+    file "merges.txt" optional true into merges //roberta only
     file "vocab.json" optional true into vocabjson //roberta only
     file "vocab.txt" optional true into vocabfile //bert only
     file "eval_results.txt" into dev_results
