@@ -95,8 +95,8 @@ process run_ner {
     file "dev.txt" from Channel.fromPath(params.devdata)
     file "test.txt" from Channel.fromPath(params.testdata)
     file labels from labelsfile
-    file run_ner_script from Channel.fromPath(params.examplespath + "/ner/run_ner.py")
-    file ner_utils_script from Channel.fromPath(params.examplespath + "/ner/utils_ner.py")
+    file run_ner_script from Channel.fromPath(params.examplespath + "/token-classification/run_ner.py")
+    file ner_utils_script from Channel.fromPath(params.examplespath + "/token-classification/utils_ner.py")
     val model from params.model
     val model_type from params.model_type
     val epochs from params.num_train_epochs
