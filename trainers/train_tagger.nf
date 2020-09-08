@@ -130,7 +130,7 @@ process run_ner {
         extra=""
     fi
 
-    python3 $run_ner_script \$extra --data_dir ./ --output_dir ./ --overwrite_output_dir --labels $labels --model_name_or_path $model --model_type $model_type --num_train_epochs $epochs --seed $seed --per_gpu_train_batch_size $batch_size --save_steps $save_steps --do_train --do_eval --do_predict
+    python3 $run_ner_script \$extra --data_dir ./ --output_dir ./ --overwrite_output_dir --labels $labels --model_name_or_path $model --num_train_epochs $epochs --seed $seed --per_gpu_train_batch_size $batch_size --save_steps $save_steps --do_train --do_eval --do_predict
     exit \$?
     """
 }
