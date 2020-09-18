@@ -1,16 +1,17 @@
 [package]
 name = "deepfrog"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Maarten van Gompel <proycon@anaproy.nl>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rust-bert = { version = "0.7.7", path = "/home/proycon/work/rust-bert" }
-folia = { version = "0.0.3", path = "/home/proycon/work/folia-rust" }
+rust-bert = { version = "0.10.0", path = "/home/proycon/work/rust-bert" }
+folia = { version = "0.0.4", path = "/home/proycon/work/folia-rust" }
 clap = "2.33.0"
 serde = "1.0.106"
 serde_yaml = "0.8.11"
 serde_derive = "1.0.106"
 serde_json = "1.0.52"
+thiserror = "1.0.20"
