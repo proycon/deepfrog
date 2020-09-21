@@ -1,7 +1,7 @@
 pub mod error;
 pub mod foliaxml;
 pub mod json;
-//pub mod lemma;
+pub mod lemma;
 
 extern crate serde;
 extern crate serde_yaml;
