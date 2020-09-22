@@ -33,4 +33,5 @@ models:
     config_remote: "https://cdn.huggingface.co/proycon/bert-lemma-cased-cgn+elex-nld/config.json"
     vocab_local: "bert-lemma-cased-cgn+elex-nld/vocab.txt"
     vocab_remote: "https://cdn.huggingface.co/proycon/bert-lemma-cased-cgn+elex-nld/vocab.txt"
+    sesdiff: true
 

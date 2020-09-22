@@ -78,11 +78,12 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
     for (i, filename) in files.iter().enumerate() {
         eprintln!("Processing file {} of {}: {} ...", i+1, files.len(), filename);
         let result = deepfrog.process_text(&filename, true);
-        let (output, input) = result.expect("unwrapping");
+        let (mut output, input) = result.expect("unwrapping");
         if matches.is_present("json-low") {
             DeepFrog::print_json_low(&output, &input);
         } else {
             let offsets_to_tokens = consolidate_layers(&output);
+            deepfrog.translate_labels(&input, &mut output, &offsets_to_tokens);
             if matches.is_present("json") {
                 deepfrog.print_json_high(&offsets_to_tokens, &output, &input);
             } else {

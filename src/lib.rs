@@ -22,6 +22,7 @@ use std::error::Error;
 use std::path::{PathBuf};
 
 use crate::error::DeepFrogError;
+use crate::lemma::compute_lemma;
 
 pub struct DeepFrog {
     pub config: Configuration,
@@ -121,6 +122,28 @@ impl DeepFrog {
         };
         Ok((output, input))
     }
+
+    pub fn translate_labels(&self, input: &Vec<String>, output: &mut Vec<ModelOutput>, offsets_to_tokens: &Vec<OffsetToTokens>)  {
+        for (i, modelspec) in self.config.models.iter().enumerate() {
+            if modelspec.sesdiff {
+                for offset in offsets_to_tokens.iter() {
+                    let mut sentence_text: Option<&str> = None;
+                    for (model_index, token_index) in offset.model_token_indices.iter() {
+                        if *model_index == i {
+                            if sentence_text.is_none() {
+                                sentence_text = Some(input.get(offset.sentence).expect("sentence not found in input"));
+                            }
+                            let token_text: &str = get_text_by_char_offset(sentence_text.unwrap(), offset.begin, offset.end).expect("unable to get token text");
+                            if let Some(token) = output[*model_index].labeled_tokens.get_mut(*token_index) {
+                                token.label = compute_lemma( token_text , token.label.as_str()).expect("computed lemma");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 #[derive(Serialize, Deserialize)]
@@ -189,6 +212,10 @@ pub struct ModelSpecification {
     ///Delimiter used in the BIO-scheme (example: in a tag like B-per the delimiter is a hyphen)
     #[serde(default)]
     pub bio_delimiter: String,
+
+    ///Does this model use the sesdiff label classes? (for lemmatisation)
+    #[serde(default)]
+    pub sesdiff: bool,
 
 }
 
