@@ -25,13 +25,13 @@ models:
     vocab_remote: "https://cdn.huggingface.co/proycon/bert-pos-cased-deepfrog-nld/vocab.txt"
   - annotation_type: LEMMA
     folia_set: undefined
-    model_name: bert-lemma-cased-cgn+elex-nld
+    model_name: bert-lemma-cased-cgn_elex-nld
     model_type: Bert
-    model_local: "bert-lemma-cased-cgn+elex-nld/model.ot"
-    model_remote: "https://cdn.huggingface.co/proycon/bert-lemma-cased-cgn+elex-nld/model.ot"
-    config_local: "bert-lemma-cased-cgn+elex-nld/config.json"
-    config_remote: "https://cdn.huggingface.co/proycon/bert-lemma-cased-cgn+elex-nld/config.json"
-    vocab_local: "bert-lemma-cased-cgn+elex-nld/vocab.txt"
-    vocab_remote: "https://cdn.huggingface.co/proycon/bert-lemma-cased-cgn+elex-nld/vocab.txt"
+    model_local: "bert-lemma-cased-cgn_elex-nld/model.ot"
+    model_remote: "https://cdn.huggingface.co/proycon/bert-lemma-cased-cgn_elex-nld/model.ot"
+    config_local: "bert-lemma-cased-cgn_elex-nld/config.json"
+    config_remote: "https://cdn.huggingface.co/proycon/bert-lemma-cased-cgn_elex-nld/config.json"
+    vocab_local: "bert-lemma-cased-cgn_elex-nld/vocab.txt"
+    vocab_remote: "https://cdn.huggingface.co/proycon/bert-lemma-cased-cgn_elex-nld/vocab.txt"
     sesdiff: true
 
