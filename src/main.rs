@@ -77,16 +77,19 @@ fn main() -> Result<(), Box<dyn Error + 'static>> {
 
     for (i, filename) in files.iter().enumerate() {
         eprintln!("Processing file {} of {}: {} ...", i+1, files.len(), filename);
-        let result = deepfrog.process_text(&filename, true);
-        let (mut output, input) = result.expect("unwrapping");
+        let (mut output, input) = deepfrog.process_text(&filename, true)?;
+        eprintln!("\t{} input lines, {} output lines ...", input.len(), output.len());
         if matches.is_present("json-low") {
+            eprintln!("\tOutputting low-level JSON");
             DeepFrog::print_json_low(&output, &input);
         } else {
             let offsets_to_tokens = consolidate_layers(&output);
             deepfrog.translate_labels(&input, &mut output, &offsets_to_tokens);
             if matches.is_present("json") {
+                eprintln!("\tOutputting high-level JSON");
                 deepfrog.print_json_high(&offsets_to_tokens, &output, &input);
             } else {
+                eprintln!("\tOutputting FoLiA XML");
                 let filename = PathBuf::from(filename);
                 let id = if let Some(filestem) = filename.file_stem() {
                     filestem.to_str().expect("to str")
