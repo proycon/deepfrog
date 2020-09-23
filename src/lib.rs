@@ -48,7 +48,7 @@ impl DeepFrog {
 
     pub fn load_models(&mut self) -> Result<(), DeepFrogError> {
         for (i, modelspec) in self.config.models.iter().enumerate() {
-            eprintln!("    Loading model {} of {}: {}:{}  ...", i+1, self.config.models.len(), modelspec.annotation_type, modelspec.model_name);
+            eprintln!("    Loading model {} of {}: {}:{} (from {}) ...", i+1, self.config.models.len(), modelspec.annotation_type, modelspec.model_name, modelspec.model_remote.as_str());
 
             let model_resource: Resource =  Resource::Remote(RemoteResource::from_pretrained( (modelspec.model_local.as_str(), modelspec.model_remote.as_str()) ));
             let config_resource: Resource =  Resource::Remote(RemoteResource::from_pretrained( (modelspec.config_local.as_str(), modelspec.config_remote.as_str()) ));
@@ -93,10 +93,9 @@ impl DeepFrog {
 
 
             //Load the model
-            if let Ok(model) = TokenClassificationModel::new(modelconfig) {
-                self.token_classification_models.push(model);
-            } else {
-                return Err(DeepFrogError::OtherError("Failed to load model!".to_string()));
+            match TokenClassificationModel::new(modelconfig) {
+                Ok(model) => self.token_classification_models.push(model),
+                Err(e) => return Err(From::from(e)),
             }
         }
         Ok(())
