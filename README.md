@@ -28,7 +28,7 @@ Our deliverables are multi-faceted:
 
 We aim to make available various models for Dutch NLP.
 
-#### RobBERT Part-of-Speech (CGN tagset) for Dutch
+#### RobBERT v1 Part-of-Speech (CGN tagset) for Dutch
 
 Model page with instructions: https://huggingface.co/proycon/robbert-pos-cased-deepfrog-nld
 
@@ -45,7 +45,18 @@ precision = 0.9708171206225681
 recall = 0.9708171206225681
 ```
 
-**Note:** the tokenisation in this model is English rather than Dutch
+#### RobBERT v2 Part-of-Speech (CGN tagset) for Dutch
+
+Uses pre-trained model [RobBERT v2](https://people.cs.kuleuven.be/~pieter.delobelle/robbert/) (a Roberta model), fine-tuned on
+part-of-speech tags with the full corpus as also used by Frog. Uses the tag set of Corpus Gesproken Nederlands (CGN), this
+corpus constitutes a subset of the training data.
+
+```
+f1 = 0.9801121876593575
+loss = 0.06283498580495898
+precision = 0.9796126401630989
+recall = 0.9806122448979592
+```
 
 #### BERT Part-of-Speech (CGN tagset) for Dutch
 
