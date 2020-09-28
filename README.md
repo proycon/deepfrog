@@ -96,6 +96,20 @@ recall = 0.9038461538461539
 
 **Note:** the tokenisation in this model is English rather than Dutch
 
+#### RobBERT v2 SoNaR1 Named Entities for Dutch
+
+Model page with instructions: https://huggingface.co/proycon/robbert2-ner-cased-sonar1-nld
+
+Uses pre-trained model [RobBERT (v2)](https://people.cs.kuleuven.be/~pieter.delobelle/robbert/) (a Roberta model), fine-tuned on
+Named Entities from the SoNaR1 corpus (as also used by Frog). Provides basic PER,LOC,ORG,PRO,EVE,MISC tags.
+
+```
+f1 = 0.8878048780487806
+loss = 0.03555946223787032
+precision = 0.900990099009901
+recall = 0.875
+```
+
 #### BERT SoNaR1 Named Entities for Dutch
 
 Model page with instructions: https://huggingface.co/proycon/bert-ner-cased-sonar1-nld
