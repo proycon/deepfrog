@@ -15,8 +15,8 @@ exclude = ["models/**", "trainers/**", "examples/**", "docs/**"]
 
 
 [dependencies]
-rust-bert = { version = "0.10.0", path = "/home/proycon/work/rust-bert" }
-folia = { version = "0.0.5", path = "/home/proycon/work/folia-rust" }
+rust-bert = { version = "0.9.0" }
+folia = { version = "0.0.5" }
 clap = "2.33.0"
 serde = "1.0.106"
 serde_yaml = "0.8.11"
