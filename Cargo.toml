@@ -11,6 +11,8 @@ categories = ["science","text-processing"]
 keywords = ["nlp","text-processing","annotation","linguistics","xml"]
 license = "GPL-3.0+"
 
+exclude = ["models/**", "trainers/**", "examples/**", "docs/**"]
+
 
 [dependencies]
 rust-bert = { version = "0.10.0", path = "/home/proycon/work/rust-bert" }
