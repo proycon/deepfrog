@@ -4,7 +4,13 @@ version = "0.2.0"
 authors = ["Maarten van Gompel <proycon@anaproy.nl>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+homepage = "https://github.com/proycon/deepfrog"
+repository = "https://github.com/proycon/deepfrog"
+documentation = "https://docs.rs/deepfrog"
+categories = ["science","text-processing"]
+keywords = ["nlp","text-processing","annotation","linguistics","xml"]
+license = "GPL-3.0+"
+
 
 [dependencies]
 rust-bert = { version = "0.10.0", path = "/home/proycon/work/rust-bert" }
