@@ -4,6 +4,7 @@ version = "0.2.0"
 authors = ["Maarten van Gompel <proycon@anaproy.nl>"]
 edition = "2018"
 
+description = "A deep learning NLP suite (PoS,lemmatiser,NER) with FoLiA XML support"
 homepage = "https://github.com/proycon/deepfrog"
 repository = "https://github.com/proycon/deepfrog"
 documentation = "https://docs.rs/deepfrog"
