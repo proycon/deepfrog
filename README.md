@@ -24,6 +24,31 @@ Our deliverables are multi-faceted:
     * with full support for [FoLiA XML](https://proycon.github.io/folia) input/output.
     * usage is not limited to the models we provide
 
+## Installation
+
+DeepFrog and all its dependencies are included as an extra in [LaMachine](https://proycon.github.io/LaMachine), which is the easiest
+way to install it. Within lamachine, do:
+
+  ``lamachine-add deepfrog && lamachine-update``
+
+Otherwise, simply install DeepFrog using Rust's package manager:
+
+```
+cargo install deepfrog
+```
+
+No cargo/rust on your system yet? Do ``sudo apt install cargo`` on Debian/ubuntu based systems, ``brew install rust`` on mac, or use [rustup](https://rustup.rs/).
+
+In order to run the DeepFrog command-line-tool, you need to have the C++ library [libtorch](https://pytorch.org/) installed.
+Download it from https://pytorch.org/ ; make sure you select *package: libtorch* there! You don't need the rest of
+pytorch.
+
+
+To use our models directly with the [Huggingface's Transformers](https://github.com/huggingface/transformers) library
+for Python, you merely need that library, models will be automatically downloaded and installed as you invoke them. The
+DeepFrog command-line-tool is not used in this workflow.
+
+
 ## Models
 
 We aim to make available various models for Dutch NLP.
