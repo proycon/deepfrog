@@ -1,0 +1,29 @@
+language: nld
+models:
+  - annotation_type: ENTITY
+    folia_set: undefined
+    model_name: robbert2-ner-cased-sonar1-nld
+    model_type: Roberta
+    model_local: "robbert2-ner-cased-sonar1-nld/model.ot"
+    model_remote: "https://cdn.huggingface.co/proycon/robbert2-ner-cased-sonar1-nld/model.ot"
+    config_local: "robbert2-ner-cased-sonar1-nld/config.json"
+    config_remote: "https://cdn.huggingface.co/proycon/robbert2-ner-cased-sonar1-nld/config.json"
+    vocab_local: "robbert2-ner-cased-sonar1-nld/vocab.json"
+    vocab_remote: "https://cdn.huggingface.co/proycon/robbert2-ner-cased-sonar1-nld/vocab.json"
+    merges_local: "robbert2-ner-cased-sonar1-nld/merges.txt"
+    merges_remote: "https://cdn.huggingface.co/proycon/robbert2-ner-cased-sonar1-nld/merges.txt"
+    ignore_first_label: true
+  - annotation_type: POS
+    folia_set: undefined
+    model_name: robbert2-pos-cased-deepfrog-nld
+    model_type: Roberta
+    model_local: "robbert2-pos-cased-deepfrog-nld/model.ot"
+    model_remote: "https://cdn.huggingface.co/proycon/robbert2-pos-cased-deepfrog-nld/model.ot"
+    config_local: "robbert2-pos-cased-deepfrog-nld/config.json"
+    config_remote: "https://cdn.huggingface.co/proycon/robbert2-pos-cased-deepfrog-nld/config.json"
+    vocab_local: "robbert2-pos-cased-deepfrog-nld/vocab.json"
+    vocab_remote: "https://cdn.huggingface.co/proycon/robbert2-pos-cased-deepfrog-nld/vocab.json"
+    merges_local: "robbert2-pos-cased-deepfrog-nld/merges.txt"
+    merges_remote: "https://cdn.huggingface.co/proycon/robbert2-pos-cased-deepfrog-nld/merges.txt"
+    ignore_first_label: false
+

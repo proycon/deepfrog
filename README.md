@@ -110,6 +110,7 @@ precision = 0.900990099009901
 recall = 0.875
 ```
 
+
 #### BERT SoNaR1 Named Entities for Dutch
 
 Model page with instructions: https://huggingface.co/proycon/bert-ner-cased-sonar1-nld
