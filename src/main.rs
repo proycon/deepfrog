@@ -16,7 +16,7 @@ use deepfrog::{DeepFrog,consolidate_layers};
 
 fn main() -> Result<(), Box<dyn Error + 'static>> {
     let matches = App::new("DeepFrog")
-        .version("0.2.0")
+        .version("0.3.0")
         .author("Maarten van Gompel (proycon) <proycon@anaproy.nl>")
         .about("An NLP tool")
             .arg(Arg::with_name("config")

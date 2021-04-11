@@ -377,7 +377,7 @@ dependencies = [
 
 [[package]]
 name = "deepfrog"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "clap",
  "folia",
@@ -785,15 +785,6 @@ checksum = "47be2f14c678be2fdcab04ab1171db51b2762ce6f0a8ee87c8dd4a04ed216135"
 
 [[package]]
 name = "itertools"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "284f18f85651fe11e8a991b2adb42cb078325c996ed026d994719efcfca1d54b"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37d572918e350e82412fe766d24b15e6682fb2ed2bbe018280caa810397cb319"
@@ -1122,9 +1113,9 @@ dependencies = [
 
 [[package]]
 name = "protobuf"
-version = "2.18.0"
+version = "2.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d147edb77bcccbfc81fabffdc7bd50c13e103b15ca1e27515fe40de69a5776b"
+checksum = "1b7f4a129bb3754c25a4e04032a90173c68f85168f77118ac4cb4936e7f06f92"
 
 [[package]]
 name = "quick-xml"
@@ -1371,7 +1362,7 @@ checksum = "f476f93bfaacec20881a3a4c52a798d12ff1355157afc423f5337a2fa86217f4"
 dependencies = [
  "cached-path",
  "dirs",
- "itertools 0.10.0",
+ "itertools",
  "lazy_static",
  "ordered-float",
  "rust_tokenizers",
@@ -1384,13 +1375,13 @@ dependencies = [
 
 [[package]]
 name = "rust_tokenizers"
-version = "6.2.1"
+version = "6.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61f0896b5b81ff11d4834fea745bbfe52487c06293b9a96ff12e50e7566808be"
+checksum = "9a4ccd2aba5b8c61faf9867a31c124d9f4a532abca69f812717c0e64ab46c353"
 dependencies = [
  "csv",
  "hashbrown",
- "itertools 0.9.0",
+ "itertools",
  "lazy_static",
  "protobuf",
  "rayon",
