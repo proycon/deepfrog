@@ -16,11 +16,15 @@ exclude = ["models/**", "trainers/**", "examples/**", "docs/**"]
 
 
 [dependencies]
-rust-bert = { version = "0.14.0" }
+rust-bert = { version = "0.15.1" }
 folia = { version = "0.0.5" }
 clap = "2.33.0"
 serde = "1.0.106"
 serde_yaml = "0.8.11"
 serde_derive = "1.0.106"
 serde_json = "1.0.52"
+tch = "0.4.1"
 thiserror = "1.0.20"
+
+[dev-dependencies]
+torch-sys = "0.4.1"

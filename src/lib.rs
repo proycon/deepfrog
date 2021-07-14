@@ -111,7 +111,7 @@ impl DeepFrog {
             let labeled_tokens = model.predict(&lines_ref, true, false);
             output.push( ModelOutput {
                 model_name: &modelspec.model_name,
-                labeled_tokens: labeled_tokens
+                labeled_tokens: labeled_tokens.into_iter().flatten().collect()
             });
         }
         let input: Vec<String> = if return_input {
